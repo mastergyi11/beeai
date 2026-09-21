@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BeeChat AI</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    }
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background: #ffffff;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==================== LOGIN PAGE ==================== */
+    #auth-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      padding: 20px;
+      background: #ffffff;
+    }
+    #auth-container .auth-box {
+      width: 100%;
+      max-width: 400px;
+    }
+    #auth-container h1 {
+      text-align: center;
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    #auth-container p {
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+    #auth-container input {
+      width: 100%;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      background: #f9f9f9;
+      transition: all 0.2s;
+    }
+    #auth-container input:focus {
+      border-color: #10a37f;
+      background: #fff;
+    }
+    #auth-container button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+    }
+    .btn-primary {
+      background: #10a37f;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #0d8a6a;
+    }
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    /* ==================== CHAT PAGE ==================== */
+    #app-container {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+      background: #ffffff;
+    }
+    #app-container.active {
+      display: flex;
+    }
+
+    /* Header */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e5e5;
+      background: #ffffff;
+      flex-shrink: 0;
+    }
+    .app-header .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 17px;
+      color: #333;
+    }
+    .app-header .logout-btn {
+      background: transparent;
+      border: 1px solid #e0e0e0;
+      color: #666;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .app-header .logout-btn:hover {
+      background: #f5f5f5;
+    }
+
+    /* Chat Area */
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px 100px 16px;
+      background: #ffffff;
+    }
+    .chat-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    .chat-area::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 3px;
+    }
+
+    /* Messages */
+    .msg {
+      display: flex;
+      margin-bottom: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .msg.user {
+      justify-content: flex-end;
+    }
+    .msg.ai {
+      justify-content: flex-start;
+    }
+    .msg .bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    .msg.user .bubble {
+      background: #10a37f;
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.ai .bubble {
+      background: #f4f4f4;
+      color: #1a1a1a;
+      border-bottom-left-radius: 4px;
+    }
+    .msg .bubble img {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-top: 8px;
+    }
+
+    /* Typing indicator */
+    .typing {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px 0;
+    }
+    .typing span {
+      width: 8px;
+      height: 8px;
+      background: #999;
+      border-radius: 50%;
+      animation: blink 1.4s infinite both;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.3; }
+      40% { opacity: 1; }
+    }
+
+    /* Input Area */
+    .input-area {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 16px 20px 16px;
+      background: #ffffff;
+      border-top: 1px solid #e5e5e5;
+    }
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .input-row textarea {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 24px;
+      font-size: 15px;
+      resize: none;
+      outline: none;
+      max-height: 120px;
+      min-height: 48px;
+      line-height: 1.4;
+      background: #f9f9f9;
+      transition: all 0.2s;
+    }
+    .input-row textarea:focus {
+      border-color: #10a37f;
+      background: #fff;
+    }
+    .send-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #10a37f;
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .send-btn:hover {
+      background: #0d8a6a;
+    }
+    .send-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    /* Utility */
+    .error-text {
+      color: #dc3545;
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .success-text {
+      color: #28a745;
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== LOGIN PAGE ==================== -->
+  <div id="auth-container">
+    <div class="auth-box">
+      <h1>🐝 BeeChat AI</h1>
+      <p>ကိုယ်ပိုင် AI Service ကို အသုံးပြုရန် Login ဝင်ပါ</p>
+
+      <div id="auth-message"></div>
+
+      <input type="email" id="email" placeholder="📧 Email" />
+      <input type="password" id="password" placeholder="🔒 Password" />
+
+      <button class="btn-primary" onclick="signUp()">📝 Register</button>
+      <button class="btn-secondary" onclick="signIn()">🔑 Login</button>
+    </div>
+  </div>
+
+  <!-- ==================== CHAT PAGE ==================== -->
+  <div id="app-container">
+    <div class="app-header">
+      <div class="logo">🐝 BeeChat AI</div>
+      <button class="logout-btn" onclick="signOut()">Logout</button>
+    </div>
+
+    <div class="chat-area" id="chat-area">
+      <div class="msg ai">
+        <div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-row">
+        <textarea id="prompt" rows="1" placeholder="မက်ဆေ့ချ် ရိုက်ထည့်ပါ..."></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT ==================== -->
+  <script>
+    // ============================================================
+    // ⚠️ Supabase (Login/Register/Database)
+    // ============================================================
+    const SUPABASE_URL = 'https://zrcekvtzncenoeppijig.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_TuA7BebA5lNFg_32yPzfdw_E9OHIqQf';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ============================================================
+    // ⚠️ Groq AI
+    // ============================================================
+    const GROQ_API_KEY = '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';
+    const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+    // ============================================================
+    // AUTHENTICATION
+    // ============================================================
+
+    async function signUp() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const msg = document.getElementById('auth-message');
+
+      if (!email || !password) {
+        msg.innerHTML = '<p class="error-text">Email နဲ့ Password ထည့်ပါ။</p>';
+        return;
+      }
+      if (password.length < 6) {
+        msg.innerHTML = '<p class="error-text">Password အနည်းဆုံး ၆ လုံး ထည့်ပါ။</p>';
+        return;
+      }
+
+      msg.innerHTML = '<p class="success-text">⏳ စောင့်ပါ...</p>';
+
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+
+      if (error) {
+        msg.innerHTML = '<p class="error-text">❌ ' + error.message + '</p>';
+        return;
+      }
+
+      if (data && data.session) {
+        msg.innerHTML = '';
+        showApp(data.user);
+      } else {
+        msg.innerHTML = '<p class="success-text">✅ Email ကို စစ်ဆေးပါ။</p>';
+      }
+    }
+
+    async function signIn() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const msg = document.getElementById('auth-message');
+
+      if (!email || !password) {
+        msg.innerHTML = '<p class="error-text">Email နဲ့ Password ထည့်ပါ။</p>';
+        return;
+      }
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        msg.innerHTML = '<p class="error-text">❌ ' + error.message + '</p>';
+      } else {
+        msg.innerHTML = '';
+        showApp(data.user);
+      }
+    }
+
+    async function signOut() {
+      await supabaseClient.auth.signOut();
+      document.getElementById('app-container').classList.remove('active');
+      document.getElementById('auth-container').style.display = 'flex';
+    }
+
+    function showApp(user) {
+      document.getElementById('auth-container').style.display = 'none';
+      document.getElementById('app-container').classList.add('active');
+      loadHistory();
+    }
+
+    // ============================================================
+    // AI CHAT
+    // ============================================================
+
+    async function sendMessage() {
+      const promptInput = document.getElementById('prompt');
+      const prompt = promptInput.value.trim();
+      const chatArea = document.getElementById('chat-area');
+      const sendBtn = document.getElementById('send-btn');
+
+      if (!prompt) return;
+
+      // User ရဲ့ စာ
+      chatArea.innerHTML += '<div class="msg user"><div class="bubble">' + escapeHtml(prompt) + '</div></div>';
+      promptInput.value = '';
+      promptInput.style.height = 'auto';
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      // Typing indicator
+      const typingId = 'typing-' + Date.now();
+      chatArea.innerHTML += '<div class="msg ai" id="' + typingId + '"><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>';
+      chatArea.scrollTop = chatArea.scrollHeight;
+      sendBtn.disabled = true;
+
+      try {
+        const aiResponse = await callGroqAI(prompt);
+
+        document.getElementById(typingId).remove();
+        chatArea.innerHTML += '<div class="msg ai"><div class="bubble">' + escapeHtml(aiResponse) + '</div></div>';
+        chatArea.scrollTop = chatArea.scrollHeight;
+
+        await saveChat(prompt, aiResponse, null);
+
+      } catch (err) {
+        document.getElementById(typingId).remove();
+        chatArea.innerHTML += '<div class="msg ai"><div class="bubble">❌ Error: ' + escapeHtml(err.message) + '</div></div>';
+        chatArea.scrollTop = chatArea.scrollHeight;
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    async function callGroqAI(prompt) {
+      const response = await fetch(GROQ_API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + GROQ_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-120b',
+          messages: [
+            { role: 'system', content: 'You are a helpful AI assistant. Answer in Burmese if the user asks in Burmese.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 1024
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error?.message || 'Groq API error');
+      }
+
+      const data = await response.json();
+      return data.choices[0].message.content;
+    }
+
+    // ============================================================
+    // DATABASE
+    // ============================================================
+
+    async function saveChat(prompt, response, imageUrl) {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+
+      await supabaseClient.from('chats').insert({
+        user_id: user.id,
+        prompt: prompt,
+        response: response,
+        image_url: imageUrl
+      });
+    }
+
+    async function loadHistory() {
+      const chatArea = document.getElementById('chat-area');
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabaseClient
+        .from('chats')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+      if (error || !data) return;
+
+      chatArea.innerHTML = '<div class="msg ai"><div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div></div>';
+
+      data.forEach(item => {
+        if (item.prompt) {
+          chatArea.innerHTML += '<div class="msg user"><div class="bubble">' + escapeHtml(item.prompt) + '</div></div>';
+        }
+        if (item.response) {
+          chatArea.innerHTML += '<div class="msg ai"><div class="bubble">' + escapeHtml(item.response) + '</div></div>';
+        }
+        if (item.image_url) {
+          chatArea.innerHTML += '<div class="msg ai"><div class="bubble"><img src="' + item.image_url + '" alt="AI Image"></div></div>';
+        }
+      });
+
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    // ============================================================
+    // UTILITY
+    // ============================================================
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
+    }
+
+    // Enter နှိပ်ရင် ပို့မယ် (Shift+Enter ဆိုရင် အသစ်တစ်လိုင်း)
+    document.getElementById('prompt').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Textarea အလိုအလျောက် ကြီးလာစေရန်
+    document.getElementById('prompt').addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // PAGE LOAD
+    window.addEventListener('load', async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        showApp(session.user);
+      }
+    });
+  </script>
+</body>
+</html>
