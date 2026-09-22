@@ -2,8 +2,8 @@
 <html lang="my">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>BeeChat AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BeeChat AI - Image Fixed</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
@@ -189,6 +189,49 @@
       margin-top: 8px;
     }
 
+    .ai-image-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .ai-image-wrap img {
+      display: block;
+      max-width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+      margin-top: 0 !important;
+      background: #f7f7f7;
+    }
+
+    .image-download-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 42px;
+      padding: 8px 14px;
+      border: 0;
+      border-radius: 12px;
+      background: #10a37f;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .image-download-btn:active {
+      opacity: 0.85;
+    }
+
+    .image-error {
+      color: #c62828;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
     /* Typing indicator */
     .typing {
       display: inline-flex;
@@ -319,6 +362,9 @@
         <textarea id="prompt" rows="1" placeholder="မက်ဆေ့ချ် ရိုက်ထည့်ပါ..."></textarea>
         <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
       </div>
+      <div class="input-row" style="margin-top:8px;">
+        <button class="btn-secondary" onclick="generateImage()" style="width:100%;padding:10px;border-radius:24px;border:none;cursor:pointer;font-size:14px;">🎨 ပုံဖော်မယ်</button>
+      </div>
     </div>
   </div>
 
@@ -332,10 +378,15 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // ============================================================
-    // ⚠️ Groq AI
+    // ⚠️ Groq AI (စာရေး + အမေးအဖြေ)
     // ============================================================
     const GROQ_API_KEY = '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';
     const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+    // ============================================================
+    // ⚠️ Cloudflare Workers AI Image API URL
+    // ============================================================
+    const IMAGE_API_URL = 'https://beechat-image-api.seinmyint786777.workers.dev';
 
     // ============================================================
     // AUTHENTICATION
@@ -416,13 +467,11 @@
 
       if (!prompt) return;
 
-      // User ရဲ့ စာ
       chatArea.innerHTML += '<div class="msg user"><div class="bubble">' + escapeHtml(prompt) + '</div></div>';
       promptInput.value = '';
       promptInput.style.height = 'auto';
       chatArea.scrollTop = chatArea.scrollHeight;
 
-      // Typing indicator
       const typingId = 'typing-' + Date.now();
       chatArea.innerHTML += '<div class="msg ai" id="' + typingId + '"><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>';
       chatArea.scrollTop = chatArea.scrollHeight;
@@ -474,6 +523,170 @@
     }
 
     // ============================================================
+    // AI IMAGE GENERATION
+    // ============================================================
+
+    function normalizeImageSource(imageValue) {
+      if (!imageValue) return null;
+
+      if (typeof imageValue === 'object') {
+        imageValue =
+          imageValue.url ||
+          imageValue.image ||
+          imageValue.image_url ||
+          imageValue.b64_json ||
+          imageValue.base64 ||
+          imageValue.data ||
+          null;
+      }
+
+      if (typeof imageValue !== 'string') return null;
+
+      let value = imageValue.trim();
+      if (!value) return null;
+
+      if (/^(https?:\/\/|data:image\/)/i.test(value)) {
+        return value;
+      }
+
+      if (/^[A-Za-z0-9+/=\s]+$/.test(value) && value.length > 100) {
+        value = value.replace(/\s/g, '');
+        return 'data:image/png;base64,' + value;
+      }
+
+      return value;
+    }
+
+    function createImageMessage(imageValue) {
+      const src = normalizeImageSource(imageValue);
+
+      if (!src) {
+        return '<div class="msg ai"><div class="bubble image-error">❌ API က ပုံဒေတာမမှန်တဲ့ပုံစံနဲ့ ပြန်ပေးထားပါတယ်။</div></div>';
+      }
+
+      const safeSrc = escapeHtml(src);
+      const jsSrc = JSON.stringify(src).replace(/</g, '\\u003c');
+
+      return '<div class="msg ai"><div class="bubble"><div class="ai-image-wrap">' +
+        '<img src="' + safeSrc + '" alt="AI Image" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';">' +
+        '<div class="image-error" style="display:none;">❌ ပုံကိုဖွင့်မရပါ။ Image API URL/data ကို စစ်ဆေးပါ။</div>' +
+        '<button type="button" class="image-download-btn" onclick="downloadAIImage(this, ' + jsSrc + ')">⬇️ ပုံဒေါင်းလော့</button>' +
+        '</div></div></div>';
+    }
+
+    async function downloadAIImage(button, imageSrc) {
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = '⏳ ဒေါင်းလော့လုပ်နေသည်...';
+
+      try {
+        if (imageSrc.startsWith('data:')) {
+          const a = document.createElement('a');
+          a.href = imageSrc;
+          a.download = 'beechat-ai-' + Date.now() + '.png';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          return;
+        }
+
+        const response = await fetch(imageSrc, { mode: 'cors' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = 'beechat-ai-' + Date.now() + '.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+      } catch (err) {
+        try {
+          const a = document.createElement('a');
+          a.href = imageSrc;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.download = 'beechat-ai-' + Date.now() + '.png';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        } catch (fallbackErr) {
+          alert('ပုံဒေါင်းလော့မရပါ: ' + err.message);
+        }
+      } finally {
+        button.disabled = false;
+        button.textContent = originalText;
+      }
+    }
+
+    async function generateImage() {
+      const promptInput = document.getElementById('prompt');
+      const prompt = promptInput.value.trim();
+      const chatArea = document.getElementById('chat-area');
+
+      if (!prompt) {
+        alert('ပုံဖော်ချင်တဲ့ စာသား ရိုက်ထည့်ပါ။');
+        return;
+      }
+
+      chatArea.innerHTML += '<div class="msg user"><div class="bubble">🎨 ' + escapeHtml(prompt) + '</div></div>';
+      promptInput.value = '';
+      promptInput.style.height = 'auto';
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      const typingId = 'typing-' + Date.now();
+      chatArea.innerHTML += '<div class="msg ai" id="' + typingId + '"><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>';
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      try {
+        const response = await fetch(IMAGE_API_URL + '?prompt=' + encodeURIComponent(prompt), {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+
+        const responseText = await response.text();
+        let data;
+
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseErr) {
+          throw new Error('Image API က JSON ပြန်မပေးပါ။');
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error || data.message || ('Image API HTTP ' + response.status));
+        }
+
+        if (data.error) throw new Error(data.error);
+
+        const imageValue = data.image || data.image_url || data.url || data.b64_json || data.base64 || data.data;
+        const imageSrc = normalizeImageSource(imageValue);
+
+        if (!imageSrc) {
+          throw new Error('Image API က image data မပြန်ပေးပါ။');
+        }
+
+        const typingEl = document.getElementById(typingId);
+        if (typingEl) typingEl.remove();
+
+        chatArea.innerHTML += createImageMessage(imageSrc);
+        chatArea.scrollTop = chatArea.scrollHeight;
+
+        await saveChat(prompt, null, imageSrc);
+
+      } catch (err) {
+        const typingEl = document.getElementById(typingId);
+        if (typingEl) typingEl.remove();
+
+        chatArea.innerHTML += '<div class="msg ai"><div class="bubble">❌ Error: ' + escapeHtml(err.message) + '</div></div>';
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+    }
+
+    // ============================================================
     // DATABASE
     // ============================================================
 
@@ -513,7 +726,7 @@
           chatArea.innerHTML += '<div class="msg ai"><div class="bubble">' + escapeHtml(item.response) + '</div></div>';
         }
         if (item.image_url) {
-          chatArea.innerHTML += '<div class="msg ai"><div class="bubble"><img src="' + item.image_url + '" alt="AI Image"></div></div>';
+          chatArea.innerHTML += createImageMessage(item.image_url);
         }
       });
 
@@ -530,7 +743,6 @@
       return div.innerHTML;
     }
 
-    // Enter နှိပ်ရင် ပို့မယ် (Shift+Enter ဆိုရင် အသစ်တစ်လိုင်း)
     document.getElementById('prompt').addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -538,13 +750,11 @@
       }
     });
 
-    // Textarea အလိုအလျောက် ကြီးလာစေရန်
     document.getElementById('prompt').addEventListener('input', function() {
       this.style.height = 'auto';
       this.style.height = Math.min(this.scrollHeight, 120) + 'px';
     });
 
-    // PAGE LOAD
     window.addEventListener('load', async () => {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
