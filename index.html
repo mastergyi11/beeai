@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BeeChat AI - Image Fixed</title>
+  <title>BeeChat AI</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
@@ -41,14 +41,39 @@
       text-align: center;
       font-size: 28px;
       color: #333;
-      margin-bottom: 8px;
-    }
-    #auth-container p {
-      text-align: center;
-      color: #888;
-      font-size: 14px;
       margin-bottom: 30px;
     }
+
+    /* Welcome Features */
+    .welcome-features {
+      margin-bottom: 30px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 18px;
+      font-size: 15px;
+      color: #555;
+      line-height: 1.5;
+    }
+    .feature-item .icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      color: #10a37f;
+      margin-top: 2px;
+    }
+    .feature-item .icon svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     #auth-container input {
       width: 100%;
       padding: 14px 16px;
@@ -89,6 +114,50 @@
     .btn-secondary:hover {
       background: #e0e0e0;
     }
+    .btn-google {
+      background: #ffffff;
+      color: #333;
+      border: 1px solid #e0e0e0 !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .btn-google:hover {
+      background: #f5f5f5;
+    }
+    .btn-google img {
+      width: 20px;
+      height: 20px;
+    }
+    .btn-skip {
+      background: transparent;
+      color: #888;
+      font-size: 14px !important;
+      font-weight: 400 !important;
+      margin-top: 5px;
+    }
+    .btn-skip:hover {
+      color: #333;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 15px 0;
+      color: #ccc;
+      font-size: 12px;
+    }
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e0e0e0;
+    }
+    .divider span {
+      padding: 0 10px;
+      color: #999;
+    }
 
     /* ==================== CHAT PAGE ==================== */
     #app-container {
@@ -102,7 +171,6 @@
       display: flex;
     }
 
-    /* Header */
     .app-header {
       display: flex;
       align-items: center;
@@ -133,7 +201,6 @@
       background: #f5f5f5;
     }
 
-    /* Chat Area */
     .chat-area {
       flex: 1;
       overflow-y: auto;
@@ -148,7 +215,6 @@
       border-radius: 3px;
     }
 
-    /* Messages */
     .msg {
       display: flex;
       margin-bottom: 20px;
@@ -194,7 +260,6 @@
       flex-direction: column;
       gap: 8px;
     }
-
     .ai-image-wrap img {
       display: block;
       max-width: 100%;
@@ -203,7 +268,6 @@
       margin-top: 0 !important;
       background: #f7f7f7;
     }
-
     .image-download-btn {
       display: inline-flex;
       align-items: center;
@@ -221,18 +285,15 @@
       cursor: pointer;
       box-sizing: border-box;
     }
-
     .image-download-btn:active {
       opacity: 0.85;
     }
-
     .image-error {
       color: #c62828;
       font-size: 14px;
       line-height: 1.5;
     }
 
-    /* Typing indicator */
     .typing {
       display: inline-flex;
       gap: 4px;
@@ -252,7 +313,6 @@
       40% { opacity: 1; }
     }
 
-    /* Input Area */
     .input-area {
       position: fixed;
       bottom: 0;
@@ -310,7 +370,6 @@
       cursor: not-allowed;
     }
 
-    /* Utility */
     .error-text {
       color: #dc3545;
       text-align: center;
@@ -332,15 +391,54 @@
   <div id="auth-container">
     <div class="auth-box">
       <h1>🐝 BeeChat AI</h1>
-      <p>ကိုယ်ပိုင် AI Service ကို အသုံးပြုရန် Login ဝင်ပါ</p>
+
+      <div class="welcome-features">
+        <div class="feature-item">
+          <span class="icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>
+            </svg>
+          </span>
+          <span>သင့်စိတ်ကူးတွေကို အသက်သွင်းပြီး အလုပ်တွေ ပြီးမြောက်အောင် လုပ်ဆောင်ပါ</span>
+        </div>
+
+        <div class="feature-item">
+          <span class="icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 16v-4M12 8h.01"/>
+            </svg>
+          </span>
+          <span>BeeChat AI က အမှားတွေ လုပ်နိုင်ပါတယ်၊ အရေးကြီးတာတွေကို စစ်ဆေးပါ</span>
+        </div>
+
+        <div class="feature-item">
+          <span class="icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+              <path d="M17 11l2 2 4-4"/>
+            </svg>
+          </span>
+          <span>Chat တွေကို ပြန်လည်စစ်ဆေးပြီး ကျွန်တော်တို့ရဲ့ AI Model တွေ တိုးတက်အောင် အသုံးပြုနိုင်ပါတယ်</span>
+        </div>
+      </div>
 
       <div id="auth-message"></div>
+
+      <button class="btn-google" onclick="signInWithGoogle()">
+        <img src="https://www.google.com/favicon.ico" alt="Google" />
+        Continue with Google
+      </button>
+
+      <div class="divider"><span>OR</span></div>
 
       <input type="email" id="email" placeholder="📧 Email" />
       <input type="password" id="password" placeholder="🔒 Password" />
 
       <button class="btn-primary" onclick="signUp()">📝 Register</button>
       <button class="btn-secondary" onclick="signIn()">🔑 Login</button>
+      <button class="btn-skip" onclick="skipLogin()">Skip</button>
     </div>
   </div>
 
@@ -378,7 +476,7 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // ============================================================
-    // ⚠️ Groq AI (စာရေး + အမေးအဖြေ)
+    // ⚠️ Groq AI
     // ============================================================
     const GROQ_API_KEY = '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';
     const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -391,6 +489,22 @@
     // ============================================================
     // AUTHENTICATION
     // ============================================================
+
+    async function signInWithGoogle() {
+      const msg = document.getElementById('auth-message');
+      msg.innerHTML = '<p class="success-text">⏳ Google ဖွင့်နေသည်...</p>';
+
+      const { data, error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+
+      if (error) {
+        msg.innerHTML = '<p class="error-text">❌ ' + error.message + '</p>';
+      }
+    }
 
     async function signUp() {
       const email = document.getElementById('email').value.trim();
@@ -441,6 +555,12 @@
         msg.innerHTML = '';
         showApp(data.user);
       }
+    }
+
+    async function skipLogin() {
+      document.getElementById('auth-container').style.display = 'none';
+      document.getElementById('app-container').classList.add('active');
+      document.getElementById('chat-area').innerHTML = '<div class="msg ai"><div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div></div>';
     }
 
     async function signOut() {
