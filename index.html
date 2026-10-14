@@ -206,7 +206,7 @@
       min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 20px 16px 160px 16px; /* အောက်ဘက် padding ကို တိုးထားသည် */
+      padding: 20px 16px 160px 16px;
       background: #ffffff;
     }
     .chat-area::-webkit-scrollbar {
@@ -575,14 +575,11 @@
       document.getElementById('app-container').classList.add('active');
       document.getElementById('chat-area').innerHTML = '<div class="msg ai"><div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div></div>';
       
-      loadLocalChat(); // ⭐️ စာဟောင်းတွေ ပြန်ပြမယ်
+      loadLocalChat();
     }
 
     async function signOut() {
       await supabaseClient.auth.signOut();
-      // ⭐️ Logout လုပ်ရင် Local Storage ထဲက စာတွေကို ဖျက်မယ် (မဖျက်ချင်ရင် ဒီ line ကို ဖျက်ပါ)
-      // localStorage.removeItem('beeChatHistory'); 
-      
       document.getElementById('app-container').classList.remove('active');
       document.getElementById('auth-container').style.display = 'flex';
     }
@@ -591,8 +588,69 @@
       document.getElementById('auth-container').style.display = 'none';
       document.getElementById('app-container').classList.add('active');
       
-      loadLocalChat(); // ⭐️ Local Storage ကနေ အရင်ပြမယ်
-      loadHistory();   // ပြီးမှ Supabase ကနေ ဆွဲမယ်
+      loadLocalChat();
+      loadHistory();
+      saveDeviceInfo(); // ⭐️ ဖုန်းအမျိုးအစား သိမ်းမယ်
+    }
+
+    // ============================================================
+    // ⭐️ ဖုန်းအမျိုးအစား ဖမ်းယူခြင်း (Device Detection)
+    // ============================================================
+
+    function getDeviceInfo() {
+      const ua = navigator.userAgent;
+      let device = "Unknown";
+      let os = "Unknown";
+      let browser = "Unknown";
+
+      if (/android/i.test(ua)) os = "Android";
+      else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+      else if (/Windows/i.test(ua)) os = "Windows";
+      else if (/Mac/i.test(ua)) os = "MacOS";
+      else if (/Linux/i.test(ua)) os = "Linux";
+
+      if (/Samsung/i.test(ua)) device = "Samsung";
+      else if (/Xiaomi|Redmi|POCO/i.test(ua)) device = "Xiaomi";
+      else if (/Huawei/i.test(ua)) device = "Huawei";
+      else if (/OPPO/i.test(ua)) device = "OPPO";
+      else if (/vivo/i.test(ua)) device = "Vivo";
+      else if (/OnePlus/i.test(ua)) device = "OnePlus";
+      else if (/iPhone/i.test(ua)) device = "iPhone";
+      else if (/iPad/i.test(ua)) device = "iPad";
+      else if (/Realme/i.test(ua)) device = "Realme";
+      else if (/Infinix/i.test(ua)) device = "Infinix";
+      else if (/Tecno/i.test(ua)) device = "Tecno";
+
+      if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = "Chrome";
+      else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
+      else if (/Firefox/i.test(ua)) browser = "Firefox";
+      else if (/Edg/i.test(ua)) browser = "Edge";
+
+      return { device, os, browser, userAgent: ua };
+    }
+
+    async function saveDeviceInfo() {
+      const info = getDeviceInfo();
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+
+      const { data: existing } = await supabaseClient
+        .from('user_devices')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('device_name', info.device)
+        .eq('os_name', info.os)
+        .limit(1);
+
+      if (existing && existing.length > 0) return;
+
+      await supabaseClient.from('user_devices').insert({
+        user_id: user.id,
+        device_name: info.device,
+        os_name: info.os,
+        browser_name: info.browser,
+        user_agent: info.userAgent
+      });
     }
 
     // ============================================================
@@ -826,7 +884,6 @@
     // ============================================================
 
     async function saveChat(prompt, response, imageUrl) {
-      // ⭐️ ၁။ Local Storage ထဲ အရင်သိမ်းမယ် (Login မလုပ်ထားရင်လည်း ရမယ်)
       let history = JSON.parse(localStorage.getItem('beeChatHistory') || '[]');
       history.push({
         prompt: prompt,
@@ -836,7 +893,6 @@
       });
       localStorage.setItem('beeChatHistory', JSON.stringify(history));
 
-      // ⭐️ ၂။ Login လုပ်ထားရင် Supabase ထဲပါ သိမ်းမယ်
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (user) {
         await supabaseClient.from('chats').insert({
@@ -848,14 +904,12 @@
       }
     }
 
-    // ⭐️ Local Storage ကနေ စာဟောင်းတွေ ပြန်ဖတ်ပြီး ပြမယ့် Function
     function loadLocalChat() {
       const chatArea = document.getElementById('chat-area');
       const history = JSON.parse(localStorage.getItem('beeChatHistory') || '[]');
 
       if (history.length === 0) return;
 
-      // မူလ နှုတ်ခွန်းဆက်စာကို ချန်ထားပြီး ကျန်တာတွေ ပြန်ပြမယ်
       history.forEach(item => {
         if (item.prompt) {
           chatArea.innerHTML += '<div class="msg user"><div class="bubble">' + escapeHtml(item.prompt) + '</div></div>';
@@ -887,69 +941,100 @@
     }
 
     // ============================================================
-    // ⭐️ စာဖျက်ခြင်း (Long Press)
+    // ⭐️ စာဖျက်ခြင်း (Long Press) - Scroll နဲ့ မတိုက်မိအောင် ပြင်ထားသည်
     // ============================================================
 
     let pressTimer = null;
-    let currentBubble = null;
+    let startX = 0;
+    let startY = 0;
+    let isScrolling = false;
 
     function setupLongPress() {
       const chatArea = document.getElementById('chat-area');
 
-      // ဖုန်းမှာ ဖိထားတဲ့အခါ (Touch)
       chatArea.addEventListener('touchstart', function(e) {
         const bubble = e.target.closest('.bubble');
         if (!bubble) return;
-        
-        currentBubble = bubble;
+
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isScrolling = false;
+
         pressTimer = setTimeout(() => {
-          showDeleteConfirm(bubble);
-        }, 600); // ၀.၆ စက္ကန့် ဖိထားရင် ပေါ်လာမယ်
+          if (!isScrolling) {
+            showDeleteConfirm(bubble);
+          }
+        }, 600);
+      }, { passive: true });
+
+      chatArea.addEventListener('touchmove', function(e) {
+        if (!startX || !startY) return;
+        
+        const diffX = Math.abs(e.touches[0].clientX - startX);
+        const diffY = Math.abs(e.touches[0].clientY - startY);
+
+        if (diffX > 10 || diffY > 10) {
+          isScrolling = true;
+          clearTimeout(pressTimer);
+        }
       }, { passive: true });
 
       chatArea.addEventListener('touchend', function() {
         clearTimeout(pressTimer);
+        startX = 0;
+        startY = 0;
       });
 
-      chatArea.addEventListener('touchmove', function() {
-        clearTimeout(pressTimer);
-      });
-
-      // ကွန်ပျူတာမှာ ဖိထားတဲ့အခါ (Mouse)
       chatArea.addEventListener('mousedown', function(e) {
         const bubble = e.target.closest('.bubble');
         if (!bubble) return;
         
-        currentBubble = bubble;
+        startX = e.clientX;
+        startY = e.clientY;
+        isScrolling = false;
+
         pressTimer = setTimeout(() => {
-          showDeleteConfirm(bubble);
+          if (!isScrolling) {
+            showDeleteConfirm(bubble);
+          }
         }, 600);
+      });
+
+      chatArea.addEventListener('mousemove', function(e) {
+        if (!startX || !startY) return;
+        
+        const diffX = Math.abs(e.clientX - startX);
+        const diffY = Math.abs(e.clientY - startY);
+
+        if (diffX > 10 || diffY > 10) {
+          isScrolling = true;
+          clearTimeout(pressTimer);
+        }
       });
 
       chatArea.addEventListener('mouseup', function() {
         clearTimeout(pressTimer);
+        startX = 0;
+        startY = 0;
       });
 
       chatArea.addEventListener('mouseleave', function() {
         clearTimeout(pressTimer);
+        startX = 0;
+        startY = 0;
       });
     }
 
-    // ⭐️ ဖျက်မလား မေးတဲ့ Box ပြမယ့် Function
     async function showDeleteConfirm(bubble) {
       const confirmDelete = confirm("🗑️ ဒီစာကို ဖျက်မှာ သေချာလား?");
       
       if (confirmDelete) {
-        // ၁။ Chat Area ကနေ ဖျက်မယ်
         const msgDiv = bubble.closest('.msg');
         if (msgDiv) {
           msgDiv.remove();
         }
 
-        // ၂။ Local Storage ကနေ ဖျက်မယ်
         let history = JSON.parse(localStorage.getItem('beeChatHistory') || '[]');
-        
-        // ဖျက်လိုက်တဲ့ စာနဲ့ ကိုက်ညီတဲ့ Data ကို ရှာပြီး ဖျက်မယ်
         const textToDelete = bubble.innerText.trim();
         history = history.filter(item => {
           return item.prompt?.trim() !== textToDelete && 
@@ -957,7 +1042,6 @@
         });
         localStorage.setItem('beeChatHistory', JSON.stringify(history));
 
-        // ၃။ Supabase ကနေ ဖျက်မယ် (Login လုပ်ထားရင်)
         const { data: { user } } = await supabaseClient.auth.getUser();
         if (user) {
           await supabaseClient.from('chats')
@@ -970,20 +1054,16 @@
       }
     }
 
-    // ⭐️ စာတွေအကုန် ဖျက်မယ့် Function
     async function clearAllChat() {
       if (!confirm("Chat စာတွေအကုန် ဖျက်မှာ သေချာလား?")) return;
 
-      // ၁။ Local Storage ထဲက ဖျက်မယ်
       localStorage.removeItem('beeChatHistory');
 
-      // ၂။ Supabase ထဲက ဖျက်မယ် (Login လုပ်ထားရင်)
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (user) {
         await supabaseClient.from('chats').delete().eq('user_id', user.id);
       }
 
-      // ၃။ Chat Area ကို ပြန်ရှင်းမယ်
       document.getElementById('chat-area').innerHTML = 
         '<div class="msg ai"><div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div></div>';
     }
@@ -1011,7 +1091,7 @@
     });
 
     window.addEventListener('load', async () => {
-      setupLongPress(); // ⭐️ Long Press ကို အလုပ်လုပ်အောင် လုပ်မယ်
+      setupLongPress();
       
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
