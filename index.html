@@ -476,10 +476,9 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // ============================================================
-    // ⚠️ Groq AI
+    // Groq AI via Cloudflare Worker (API key stays server-side)
     // ============================================================
-    const GROQ_API_KEY = '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';
-    const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+    const GROQ_API_URL = 'https://beechai.klay91680.workers.dev';
 
     // ============================================================
     // ⚠️ Cloudflare Workers AI Image API URL
@@ -619,27 +618,22 @@
       const response = await fetch(GROQ_API_URL, {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + GROQ_API_KEY,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          model: 'openai/gpt-oss-120b',
-          messages: [
-            { role: 'system', content: 'You are a helpful AI assistant. Answer in Burmese if the user asks in Burmese.' },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.7,
-          max_tokens: 1024
-        })
+        body: JSON.stringify({ prompt })
       });
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error?.message || 'Groq API error');
+        throw new Error(data.error || ('BeeChat AI request failed (HTTP ' + response.status + ')'));
       }
 
-      const data = await response.json();
-      return data.choices[0].message.content;
+      if (typeof data.answer !== 'string' || !data.answer) {
+        throw new Error('Worker က AI အဖြေမမှန်တဲ့ပုံစံနဲ့ ပြန်ပေးထားပါတယ်။');
+      }
+
+      return data.answer;
     }
 
     // ============================================================
@@ -883,4 +877,4 @@
     });
   </script>
 </body>
-</html>
+  </html>
