@@ -894,17 +894,34 @@
       sendBtn.disabled = true;
 
       try {
+        // ChatGPT-style routing: image requests are handled directly from the chat input.
+        // No need to press the separate image-generation button.
+        if (!attachment && isImageGenerationRequest(prompt)) {
+          const englishPrompt = await buildEnglishImagePrompt(prompt);
+          const imageSrc = await requestGeneratedImage(englishPrompt);
+          const typingEl = document.getElementById(typingId);
+          if (typingEl) typingEl.remove();
+          chatArea.innerHTML += createImageMessage(imageSrc);
+          chatArea.scrollTop = chatArea.scrollHeight;
+          await saveChat(prompt, null, imageSrc);
+          return;
+        }
+
         let aiResponse;
         if (attachment) {
           if (attachmentDataUrl && attachment.type.startsWith('image/')) {
-            aiResponse = await callGroqAI(prompt || 'ဒီပုံကို ကြည့်ပြီး ရှင်းပြပေးပါ။', {
+            aiResponse = await callGroqAI(prompt || 'ဒီပုံကို ကြည့်ပြီး မြန်မာလို ရှင်းပြပေးပါ။', {
               fileName: attachment.name,
               mimeType: attachment.type,
               imageDataUrl: attachmentDataUrl
             });
+          } else if (attachment.type && /^(text\/|application\/json)/i.test(attachment.type)) {
+            const fileText = await readTextAttachment(attachment);
+            aiResponse = await callGroqAI((prompt ? prompt + '\n\n' : 'ဒီဖိုင်ကို စစ်ဆေးပြီး ရှင်းပြပါ။') +
+              '\n\n--- ဖိုင်အကြောင်းအရာ: ' + attachment.name + ' ---\n' + fileText);
           } else {
             aiResponse = await callGroqAI((prompt ? prompt + '\n\n' : '') +
-              '[ဖိုင်တွဲထားသည်: ' + attachment.name + '။ လက်ရှိ Worker သည် ဖိုင်အကြောင်းအရာကို မဖတ်နိုင်ပါက ဖိုင်ဖတ်ခြင်းကို backend တွင် ထည့်သွင်းရန်လိုသည်။]');
+              '[ဖိုင်တွဲထားသည်: ' + attachment.name + '။ ဒီဖိုင်အမျိုးအစားကို browser မှာ အလိုအလျောက်ဖတ်မရသေးပါ။ TXT/HTML/CSS/JS/JSON ဖိုင်များကို စမ်းကြည့်ပါ။]');
           }
           clearAttachment();
         } else {
@@ -950,6 +967,62 @@
       }
 
       return data.answer;
+    }
+
+    // ============================================================
+    // CHAT ROUTING + IMAGE GENERATION
+    // ============================================================
+
+    function isImageGenerationRequest(text) {
+      const t = String(text || '').trim().toLowerCase();
+      if (!t) return false;
+      const burmeseImage = /ပုံ|ဓာတ်ပုံ|နောက်ခံပုံ|လိုဂို|ပိုစတာ|အနုပညာပုံ|ကာတွန်းပုံ/.test(t);
+      const burmeseAction = /ဖော်|ဖန်တီး|ဆွဲ|လုပ်ပေး|ထုတ်ပေး|ပြုလုပ်|ဖန်တီးပေး|ဆွဲပေး|လုပ်ပေးပါ|ဖော်ပေး/.test(t);
+      const englishImage = /\b(image|picture|photo|illustration|wallpaper|logo|poster|avatar|artwork|drawing)\b/i.test(t);
+      const englishAction = /\b(generate|create|draw|make|design|render|illustrate)\b/i.test(t);
+      if (burmeseImage && burmeseAction) return true;
+      if (englishImage && englishAction) return true;
+      if (/\b(generate|create|draw|make|design)\b/i.test(t) && /\b(anime|wallpaper|logo|poster|portrait|landscape)\b/i.test(t)) return true;
+      return false;
+    }
+
+    async function buildEnglishImagePrompt(userPrompt) {
+      // Image models often follow English prompts more reliably. Translate the user's
+      // Burmese request while preserving all visual details and text requirements.
+      const instruction = 'Translate the following image-generation request into a detailed, natural English prompt for an image-generation model. Preserve the exact meaning, people, objects, setting, composition, colors, style, and any requested visible text. Do not add new details. Return only the English prompt, no explanation. User request: ' + userPrompt;
+      try {
+        const translated = (await callGroqAI(instruction)).trim();
+        if (translated && translated.length > 5) return translated.slice(0, 1800);
+      } catch (e) {
+        // If translation is temporarily unavailable, still attempt generation with original text.
+      }
+      return userPrompt;
+    }
+
+    async function requestGeneratedImage(prompt) {
+      const response = await fetch(IMAGE_API_URL + '?prompt=' + encodeURIComponent(prompt), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      const responseText = await response.text();
+      let data;
+      try { data = JSON.parse(responseText); }
+      catch (parseErr) { throw new Error('Image API က JSON ပြန်မပေးပါ။'); }
+      if (!response.ok) throw new Error(data.error || data.message || ('Image API HTTP ' + response.status));
+      if (data.error) throw new Error(data.error);
+      const imageValue = data.image || data.image_url || data.url || data.b64_json || data.base64 || data.data;
+      const imageSrc = normalizeImageSource(imageValue);
+      if (!imageSrc) throw new Error('Image API က ပုံဒေတာ မပြန်ပေးပါ။');
+      return imageSrc;
+    }
+
+    function readTextAttachment(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || '').slice(0, 60000));
+        reader.onerror = () => reject(new Error('ဖိုင်ကို ဖတ်မရပါ။'));
+        reader.readAsText(file);
+      });
     }
 
     // ============================================================
@@ -1072,32 +1145,8 @@
       chatArea.scrollTop = chatArea.scrollHeight;
 
       try {
-        const response = await fetch(IMAGE_API_URL + '?prompt=' + encodeURIComponent(prompt), {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        });
-
-        const responseText = await response.text();
-        let data;
-
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseErr) {
-          throw new Error('Image API က JSON ပြန်မပေးပါ။');
-        }
-
-        if (!response.ok) {
-          throw new Error(data.error || data.message || ('Image API HTTP ' + response.status));
-        }
-
-        if (data.error) throw new Error(data.error);
-
-        const imageValue = data.image || data.image_url || data.url || data.b64_json || data.base64 || data.data;
-        const imageSrc = normalizeImageSource(imageValue);
-
-        if (!imageSrc) {
-          throw new Error('Image API က image data မပြန်ပေးပါ။');
-        }
+        const englishPrompt = await buildEnglishImagePrompt(prompt);
+        const imageSrc = await requestGeneratedImage(englishPrompt);
 
         const typingEl = document.getElementById(typingId);
         if (typingEl) typingEl.remove();
