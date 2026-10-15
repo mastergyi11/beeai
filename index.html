@@ -394,6 +394,44 @@
       margin-bottom: 10px;
     }
     .hidden { display: none !important; }
+
+    /* ChatGPT-like menus, attachments, and dialogs */
+    .header-actions { display:flex; align-items:center; gap:8px; position:relative; }
+    .icon-btn { width:40px; height:40px; border:1px solid #e5e5e5; border-radius:50%; background:#fff; color:#222; font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .icon-btn:active, .menu-item:active, .attach-option:active { background:#f0f0f0; }
+    .popup-menu { position:absolute; right:0; top:48px; width:min(270px, calc(100vw - 32px)); background:#fff; border:1px solid #e5e5e5; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,.14); padding:7px; z-index:50; }
+    .menu-item { display:flex; align-items:center; gap:12px; width:100%; padding:12px; border:0; border-radius:10px; background:#fff; color:#222; text-align:left; font-size:14px; cursor:pointer; }
+    .menu-item .mi-icon { width:24px; text-align:center; font-size:18px; }
+    .menu-separator { height:1px; background:#eee; margin:5px 4px; }
+    .input-shell { max-width:800px; margin:0 auto; }
+    .input-row { max-width:800px; }
+    .attach-btn { width:48px; height:48px; border-radius:50%; border:1px solid #ddd; background:#fff; color:#222; font-size:25px; flex-shrink:0; cursor:pointer; }
+    .attach-wrap { position:relative; flex-shrink:0; }
+    .attach-menu { position:absolute; left:0; bottom:56px; width:220px; background:#fff; border:1px solid #e5e5e5; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,.14); padding:7px; z-index:40; }
+    .attach-option { display:flex; align-items:center; gap:10px; width:100%; padding:12px; border:0; border-radius:10px; background:#fff; text-align:left; color:#222; font-size:14px; cursor:pointer; }
+    .attachment-preview { display:none; max-width:800px; margin:0 auto 8px; padding:8px 12px; border:1px solid #e5e5e5; border-radius:14px; background:#fafafa; align-items:center; gap:10px; }
+    .attachment-preview img { width:54px; height:54px; object-fit:cover; border-radius:8px; }
+    .attachment-info { min-width:0; flex:1; font-size:13px; color:#444; overflow-wrap:anywhere; }
+    .remove-attachment { border:0; background:transparent; font-size:22px; padding:5px 9px; cursor:pointer; color:#666; }
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:100; display:flex; align-items:center; justify-content:center; padding:18px; }
+    .app-modal { width:100%; max-width:480px; max-height:80vh; overflow:auto; background:#fff; border-radius:18px; padding:18px; box-shadow:0 10px 40px rgba(0,0,0,.2); }
+    .modal-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+    .modal-head h3 { font-size:18px; color:#222; }
+    .modal-close { border:0; background:#f2f2f2; border-radius:50%; width:34px; height:34px; font-size:20px; cursor:pointer; }
+    .history-search { width:100%; padding:11px 12px; border:1px solid #ddd; border-radius:10px; margin-bottom:12px; font-size:14px; }
+    .history-item { padding:12px; border:1px solid #eee; border-radius:10px; margin-bottom:8px; cursor:pointer; font-size:14px; overflow-wrap:anywhere; }
+    .modal-action { padding:11px 14px; border:0; border-radius:10px; background:#10a37f; color:white; font-weight:600; cursor:pointer; }
+    .modal-note { color:#666; font-size:13px; line-height:1.5; margin:8px 0 14px; }
+    .chat-area { padding-bottom:190px; }
+    @media (max-width:480px) {
+      .app-header { padding:9px 12px; }
+      .app-header .logo { font-size:16px; }
+      .input-area { padding:10px 10px calc(12px + env(safe-area-inset-bottom)); }
+      .input-row { gap:7px; }
+      .attach-btn, .send-btn { width:44px; height:44px; }
+      .input-row textarea { min-height:44px; padding:11px 13px; }
+    }
+
   </style>
 </head>
 <body>
@@ -457,9 +495,19 @@
   <div id="app-container">
     <div class="app-header">
       <div class="logo">🐝 BeeChat AI</div>
-      <div style="display: flex; gap: 8px;">
-        <button class="logout-btn" onclick="clearAllChat()" style="border-color: #dc3545; color: #dc3545;">🗑️ Clear All</button>
-        <button class="logout-btn" onclick="signOut()">Logout</button>
+      <div class="header-actions">
+        <button class="icon-btn" type="button" onclick="newChat()" title="New chat" aria-label="New chat">＋</button>
+        <button class="icon-btn" type="button" onclick="toggleTopMenu()" title="Menu" aria-label="Menu">☰</button>
+        <div id="top-menu" class="popup-menu hidden">
+          <button class="menu-item" onclick="newChat(); closeTopMenu()"><span class="mi-icon">✏️</span><span>စကားဝိုင်းအသစ် (New chat)</span></button>
+          <button class="menu-item" onclick="openHistory(); closeTopMenu()"><span class="mi-icon">🕘</span><span>Chat History</span></button>
+          <button class="menu-item" onclick="openHistory(); closeTopMenu()"><span class="mi-icon">🔎</span><span>စကားဝိုင်းဟောင်း ရှာရန်</span></button>
+          <button class="menu-item" onclick="generateImageFromMenu(); closeTopMenu()"><span class="mi-icon">🎨</span><span>ပုံဖန်တီးရန်</span></button>
+          <button class="menu-item" onclick="openSettings(); closeTopMenu()"><span class="mi-icon">⚙️</span><span>Settings</span></button>
+          <div class="menu-separator"></div>
+          <button class="menu-item" onclick="clearAllChat(); closeTopMenu()"><span class="mi-icon">🗑️</span><span>Chat အားလုံးဖျက်ရန်</span></button>
+          <button class="menu-item" onclick="signOut(); closeTopMenu()"><span class="mi-icon">🚪</span><span>Logout</span></button>
+        </div>
       </div>
     </div>
 
@@ -470,14 +518,32 @@
     </div>
 
     <div class="input-area">
+      <div id="attachment-preview" class="attachment-preview">
+        <img id="attachment-thumb" alt="Selected attachment" style="display:none;">
+        <div id="attachment-info" class="attachment-info"></div>
+        <button type="button" class="remove-attachment" onclick="clearAttachment()" aria-label="Remove attachment">×</button>
+      </div>
       <div class="input-row">
+        <div class="attach-wrap">
+          <button class="attach-btn" type="button" onclick="toggleAttachMenu()" aria-label="Attach file" title="Attach">＋</button>
+          <div id="attach-menu" class="attach-menu hidden">
+            <button class="attach-option" onclick="openCamera()"><span>📷</span> Camera</button>
+            <button class="attach-option" onclick="openGallery()"><span>🖼️</span> Gallery / ပုံရွေးရန်</button>
+            <button class="attach-option" onclick="openFiles()"><span>📁</span> Files / ဖိုင်ရွေးရန်</button>
+            <button class="attach-option" onclick="insertMention()"><span>@</span> Mention / အကြောင်းအရာထည့်ရန်</button>
+          </div>
+        </div>
         <textarea id="prompt" rows="1" placeholder="မက်ဆေ့ချ် ရိုက်ထည့်ပါ..."></textarea>
         <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
       </div>
       <div class="input-row" style="margin-top:8px;">
         <button class="btn-secondary" onclick="generateImage()" style="width:100%;padding:10px;border-radius:24px;border:none;cursor:pointer;font-size:14px;">🎨 ပုံဖော်မယ်</button>
       </div>
+      <input id="camera-input" type="file" accept="image/*" capture="environment" hidden>
+      <input id="gallery-input" type="file" accept="image/*" hidden>
+      <input id="files-input" type="file" accept="image/*,.pdf,.txt,.html,.css,.js,.json,.md,.doc,.docx,.xls,.xlsx,.csv,.zip" hidden>
     </div>
+    <div id="modal-root"></div>
   </div>
 
   <!-- ==================== JAVASCRIPT ==================== -->
@@ -498,6 +564,156 @@
     // ⚠️ Cloudflare Workers AI Image API URL
     // ============================================================
     const IMAGE_API_URL = 'https://beechat-image-api.seinmyint786777.workers.dev';
+
+    // ============================================================
+    // ChatGPT-style menu, attachment picker, history and settings
+    // ============================================================
+    let selectedAttachment = null;
+    let selectedAttachmentDataUrl = null;
+    let currentChatStartedAt = Date.now();
+
+    function toggleTopMenu() {
+      document.getElementById('top-menu').classList.toggle('hidden');
+      document.getElementById('attach-menu').classList.add('hidden');
+    }
+    function closeTopMenu() {
+      document.getElementById('top-menu').classList.add('hidden');
+    }
+    function toggleAttachMenu() {
+      document.getElementById('attach-menu').classList.toggle('hidden');
+      closeTopMenu();
+    }
+    function closeAttachMenu() {
+      document.getElementById('attach-menu').classList.add('hidden');
+    }
+    function openCamera() {
+      closeAttachMenu();
+      document.getElementById('camera-input').click();
+    }
+    function openGallery() {
+      closeAttachMenu();
+      document.getElementById('gallery-input').click();
+    }
+    function openFiles() {
+      closeAttachMenu();
+      document.getElementById('files-input').click();
+    }
+    function insertMention() {
+      closeAttachMenu();
+      const input = document.getElementById('prompt');
+      input.value += (input.value && !input.value.endsWith(' ') ? ' ' : '') + '@';
+      input.focus();
+      input.dispatchEvent(new Event('input'));
+    }
+    function clearAttachment() {
+      selectedAttachment = null;
+      selectedAttachmentDataUrl = null;
+      document.getElementById('attachment-preview').style.display = 'none';
+      document.getElementById('camera-input').value = '';
+      document.getElementById('gallery-input').value = '';
+      document.getElementById('files-input').value = '';
+    }
+    function handleAttachmentSelection(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const maxSize = 12 * 1024 * 1024;
+      if (file.size > maxSize) {
+        alert('ဖိုင်အရွယ်အစား 12MB ထက် မကျော်ပါစေနဲ့။');
+        event.target.value = '';
+        return;
+      }
+      selectedAttachment = file;
+      const preview = document.getElementById('attachment-preview');
+      const thumb = document.getElementById('attachment-thumb');
+      document.getElementById('attachment-info').textContent = file.name + ' (' + formatFileSize(file.size) + ')';
+      if (file.type && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          selectedAttachmentDataUrl = String(reader.result || '');
+          thumb.src = selectedAttachmentDataUrl;
+          thumb.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        selectedAttachmentDataUrl = null;
+        thumb.style.display = 'none';
+      }
+      preview.style.display = 'flex';
+      closeAttachMenu();
+    }
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+    function newChat() {
+      const chatArea = document.getElementById('chat-area');
+      chatArea.innerHTML = '<div class="msg ai"><div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div></div>';
+      document.getElementById('prompt').value = '';
+      document.getElementById('prompt').style.height = 'auto';
+      clearAttachment();
+      currentChatStartedAt = Date.now();
+      closeTopMenu();
+      closeAttachMenu();
+    }
+    function generateImageFromMenu() {
+      closeTopMenu();
+      document.getElementById('prompt').focus();
+      alert('ပုံဖော်ချင်တဲ့အကြောင်းအရာကို စာရိုက်ပြီး “🎨 ပုံဖော်မယ်” ကိုနှိပ်ပါ။');
+    }
+    function openHistory() {
+      closeTopMenu();
+      const history = JSON.parse(localStorage.getItem('beeChatHistory') || '[]').slice().reverse();
+      const items = history.map((item, index) => {
+        const label = (item.prompt || 'ပုံ/ဖိုင်') + (item.created_at ? ' · ' + new Date(item.created_at).toLocaleString() : '');
+        return '<div class="history-item" data-history-index="' + index + '">' + escapeHtml(label) + '</div>';
+      }).join('');
+      showModal('🕘 Chat History', '<input id="history-search" class="history-search" placeholder="စကားဝိုင်း ရှာရန်..." oninput="filterHistory()"><div id="history-list">' +
+        (items || '<p class="modal-note">သိမ်းထားတဲ့ စကားဝိုင်း မရှိသေးပါ။</p>') + '</div>');
+      document.querySelectorAll('[data-history-index]').forEach(el => {
+        el.addEventListener('click', () => {
+          const reverseIndex = Number(el.getAttribute('data-history-index'));
+          const item = history[reverseIndex];
+          if (!item) return;
+          closeModal();
+          const area = document.getElementById('chat-area');
+          area.innerHTML = '';
+          if (item.prompt) area.innerHTML += '<div class="msg user"><div class="bubble">' + escapeHtml(item.prompt) + '</div></div>';
+          if (item.response) area.innerHTML += '<div class="msg ai"><div class="bubble">' + escapeHtml(item.response) + '</div></div>';
+          if (item.image_url) area.innerHTML += createImageMessage(item.image_url);
+          area.scrollTop = area.scrollHeight;
+        });
+      });
+    }
+    function filterHistory() {
+      const q = (document.getElementById('history-search').value || '').toLowerCase();
+      document.querySelectorAll('#history-list .history-item').forEach(el => {
+        el.style.display = el.textContent.toLowerCase().includes(q) ? 'block' : 'none';
+      });
+    }
+    function openSettings() {
+      closeTopMenu();
+      showModal('⚙️ Settings',
+        '<p class="modal-note">BeeChat AI အတွက် ရိုးရှင်းသော သတ်မှတ်ချက်များ</p>' +
+        '<button class="menu-item" onclick="showAbout()">ℹ️ App အကြောင်း</button>' +
+        '<button class="menu-item" onclick="clearAllChat(); closeModal()">🗑️ Chat History အားလုံးဖျက်ရန်</button>' +
+        '<p class="modal-note">မှတ်ချက် - AI စွမ်းဆောင်ရည်များသည် ချိတ်ဆက်ထားသော Cloudflare Worker/API ပေါ် မူတည်ပါသည်။</p>');
+    }
+    function showAbout() {
+      showModal('🐝 BeeChat AI', '<p class="modal-note">စာဖြင့်မေးမြန်းခြင်း၊ ပုံဖန်တီးခြင်းနှင့် ဖိုင်ရွေးချယ်ခြင်းကို တစ်နေရာတည်းတွင် အသုံးပြုနိုင်သော BeeChat AI ဖြစ်ပါတယ်။</p>');
+    }
+    function showModal(title, bodyHtml) {
+      const root = document.getElementById('modal-root');
+      root.innerHTML = '<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="app-modal"><div class="modal-head"><h3>' + escapeHtml(title) + '</h3><button class="modal-close" onclick="closeModal()" aria-label="Close">×</button></div><div>' + bodyHtml + '</div></div></div>';
+    }
+    function closeModal() {
+      document.getElementById('modal-root').innerHTML = '';
+    }
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.header-actions')) closeTopMenu();
+      if (!e.target.closest('.attach-wrap')) closeAttachMenu();
+    });
+
 
     // ============================================================
     // AUTHENTICATION
@@ -660,12 +876,14 @@
     async function sendMessage() {
       const promptInput = document.getElementById('prompt');
       const prompt = promptInput.value.trim();
+      const attachment = selectedAttachment;
+      const attachmentDataUrl = selectedAttachmentDataUrl;
       const chatArea = document.getElementById('chat-area');
       const sendBtn = document.getElementById('send-btn');
 
-      if (!prompt) return;
-
-      chatArea.innerHTML += '<div class="msg user"><div class="bubble">' + escapeHtml(prompt) + '</div></div>';
+      if (!prompt && !attachment) return;
+      const userLabel = (prompt ? escapeHtml(prompt) : '') + (attachment ? '<br><span style="font-size:12px;opacity:.9">📎 ' + escapeHtml(attachment.name) + '</span>' : '');
+      chatArea.innerHTML += '<div class="msg user"><div class="bubble">' + userLabel + '</div></div>';
       promptInput.value = '';
       promptInput.style.height = 'auto';
       chatArea.scrollTop = chatArea.scrollHeight;
@@ -676,7 +894,22 @@
       sendBtn.disabled = true;
 
       try {
-        const aiResponse = await callGroqAI(prompt);
+        let aiResponse;
+        if (attachment) {
+          if (attachmentDataUrl && attachment.type.startsWith('image/')) {
+            aiResponse = await callGroqAI(prompt || 'ဒီပုံကို ကြည့်ပြီး ရှင်းပြပေးပါ။', {
+              fileName: attachment.name,
+              mimeType: attachment.type,
+              imageDataUrl: attachmentDataUrl
+            });
+          } else {
+            aiResponse = await callGroqAI((prompt ? prompt + '\n\n' : '') +
+              '[ဖိုင်တွဲထားသည်: ' + attachment.name + '။ လက်ရှိ Worker သည် ဖိုင်အကြောင်းအရာကို မဖတ်နိုင်ပါက ဖိုင်ဖတ်ခြင်းကို backend တွင် ထည့်သွင်းရန်လိုသည်။]');
+          }
+          clearAttachment();
+        } else {
+          aiResponse = await callGroqAI(prompt);
+        }
 
         document.getElementById(typingId).remove();
         chatArea.innerHTML += '<div class="msg ai"><div class="bubble">' + escapeHtml(aiResponse) + '</div></div>';
@@ -693,13 +926,17 @@
       }
     }
 
-    async function callGroqAI(prompt) {
+    async function callGroqAI(prompt, attachment = null) {
+      const payload = { prompt };
+      // The Cloudflare Worker must explicitly support these optional fields
+      // for real image understanding: imageDataUrl, mimeType, and fileName.
+      if (attachment) Object.assign(payload, attachment);
       const response = await fetch(GROQ_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json().catch(() => ({}));
@@ -909,6 +1146,7 @@
       const history = JSON.parse(localStorage.getItem('beeChatHistory') || '[]');
 
       if (history.length === 0) return;
+      chatArea.innerHTML = '';
 
       history.forEach(item => {
         if (item.prompt) {
@@ -1077,6 +1315,10 @@
       div.innerText = text;
       return div.innerHTML;
     }
+
+    ['camera-input', 'gallery-input', 'files-input'].forEach(id => {
+      document.getElementById(id).addEventListener('change', handleAttachmentSelection);
+    });
 
     document.getElementById('prompt').addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
