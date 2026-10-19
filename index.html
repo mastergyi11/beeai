@@ -2,421 +2,84 @@
 <html lang="my">
 <head>
   <meta charset="UTF-8">
-  <!-- ⭐️ ဖုန်းမျက်နှာပြင် ဆွဲချ/ဆွဲချဲ့ လုပ်လို့မရအောင် ပိတ်ထားသည် -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BeeChat AI</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    /* ⭐️ မျက်နှာပြင်တစ်ခုလုံး လှုပ်ရှားမှုကို ပိတ်ထားမည် */
-    html, body {
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      background: #ffffff;
-      position: fixed; /* လုံးဝ မလှုပ်ရှားအောင် ပိတ်ခြင်း */
-      overscroll-behavior: none; 
-      touch-action: none; /* Browser ရဲ့ ဆွဲချ Refresh ကို ပိတ်ခြင်း */
-    }
-    body {
-      display: flex;
-      flex-direction: column;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; width: 100%; overflow: hidden; background: #ffffff; position: fixed; overscroll-behavior: none; touch-action: none; }
+    body { display: flex; flex-direction: column; }
 
     /* ==================== LOGIN PAGE ==================== */
-    #auth-container {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      padding: 20px;
-      background: #ffffff;
-      overflow-y: auto;
-      touch-action: pan-y; /* ဒီနေရာမှာပဲ ဆွဲချလို့ရမယ် */
-    }
-    #auth-container .auth-box {
-      width: 100%;
-      max-width: 400px;
-    }
-    #auth-container h1 {
-      text-align: center;
-      font-size: 28px;
-      color: #333;
-      margin-bottom: 30px;
-    }
-
-    .welcome-features {
-      margin-bottom: 30px;
-    }
-    .feature-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 18px;
-      font-size: 15px;
-      color: #555;
-      line-height: 1.5;
-    }
-    .feature-item .icon {
-      width: 24px;
-      height: 24px;
-      flex-shrink: 0;
-      color: #10a37f;
-      margin-top: 2px;
-    }
-    .feature-item .icon svg {
-      width: 100%;
-      height: 100%;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    #auth-container input {
-      width: 100%;
-      padding: 14px 16px;
-      margin-bottom: 12px;
-      border: 1px solid #e0e0e0;
-      border-radius: 10px;
-      font-size: 15px;
-      outline: none;
-      background: #f9f9f9;
-      transition: all 0.2s;
-    }
-    #auth-container input:focus {
-      border-color: #10a37f;
-      background: #fff;
-    }
-    #auth-container button {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-bottom: 10px;
-    }
-    .btn-primary {
-      background: #10a37f;
-      color: white;
-    }
-    .btn-primary:hover {
-      background: #0d8a6a;
-    }
-    .btn-secondary {
-      background: #f0f0f0;
-      color: #333;
-    }
-    .btn-secondary:hover {
-      background: #e0e0e0;
-    }
-    .btn-google {
-      background: #ffffff;
-      color: #333;
-      border: 1px solid #e0e0e0 !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .btn-google:hover {
-      background: #f5f5f5;
-    }
-    .btn-google img {
-      width: 20px;
-      height: 20px;
-    }
-    .btn-skip {
-      background: transparent;
-      color: #888;
-      font-size: 14px !important;
-      font-weight: 400 !important;
-      margin-top: 5px;
-    }
-    .btn-skip:hover {
-      color: #333;
-    }
-    .divider {
-      display: flex;
-      align-items: center;
-      margin: 15px 0;
-      color: #ccc;
-      font-size: 12px;
-    }
-    .divider::before,
-    .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: #e0e0e0;
-    }
-    .divider span {
-      padding: 0 10px;
-      color: #999;
-    }
+    #auth-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; padding: 20px; background: #ffffff; overflow-y: auto; touch-action: pan-y; }
+    #auth-container .auth-box { width: 100%; max-width: 400px; }
+    #auth-container h1 { text-align: center; font-size: 28px; color: #333; margin-bottom: 30px; }
+    .welcome-features { margin-bottom: 30px; }
+    .feature-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 18px; font-size: 15px; color: #555; line-height: 1.5; }
+    .feature-item .icon { width: 24px; height: 24px; flex-shrink: 0; color: #10a37f; margin-top: 2px; }
+    .feature-item .icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    #auth-container input { width: 100%; padding: 14px 16px; margin-bottom: 12px; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 15px; outline: none; background: #f9f9f9; transition: all 0.2s; }
+    #auth-container input:focus { border-color: #10a37f; background: #fff; }
+    #auth-container button { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-bottom: 10px; }
+    .btn-primary { background: #10a37f; color: white; }
+    .btn-primary:hover { background: #0d8a6a; }
+    .btn-secondary { background: #f0f0f0; color: #333; }
+    .btn-secondary:hover { background: #e0e0e0; }
+    .btn-google { background: #ffffff; color: #333; border: 1px solid #e0e0e0 !important; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .btn-google:hover { background: #f5f5f5; }
+    .btn-google img { width: 20px; height: 20px; }
+    .btn-skip { background: transparent; color: #888; font-size: 14px !important; font-weight: 400 !important; margin-top: 5px; }
+    .btn-skip:hover { color: #333; }
+    .divider { display: flex; align-items: center; margin: 15px 0; color: #ccc; font-size: 12px; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e0e0e0; }
+    .divider span { padding: 0 10px; color: #999; }
 
     /* ==================== CHAT PAGE ==================== */
-    #app-container {
-      display: none;
-      flex-direction: column;
-      height: 100vh;
-      width: 100%;
-      background: #ffffff;
-    }
-    #app-container.active {
-      display: flex;
-    }
-
-    .app-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      border-bottom: 1px solid #e5e5e5;
-      background: #ffffff;
-      flex-shrink: 0;
-      z-index: 20;
-    }
-    .app-header .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      font-size: 17px;
-      color: #333;
-    }
-
-    /* ⭐️ Chat ဧရိယာ ဆွဲချမှုကို ခွင့်ပြုမည် */
-    .chat-area {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 20px 16px 160px 16px;
-      background: #ffffff;
-      touch-action: pan-y; /* ဒီနေရာမှာပဲ ဆွဲချလို့ရမယ် */
-      overscroll-behavior-y: contain; /* အပေါ်ရောက်ရင် ပိုမဆွဲသွားအောင် ထိန်းခြင်း */
-    }
-    .chat-area::-webkit-scrollbar {
-      width: 6px;
-    }
-    .chat-area::-webkit-scrollbar-thumb {
-      background: #ccc;
-      border-radius: 3px;
-    }
-
-    .msg {
-      display: flex;
-      margin-bottom: 20px;
-      animation: fadeIn 0.3s ease;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .msg.user {
-      justify-content: flex-end;
-    }
-    .msg.ai {
-      justify-content: flex-start;
-    }
-    .msg .bubble {
-      max-width: 80%;
-      padding: 12px 16px;
-      border-radius: 18px;
-      font-size: 15px;
-      line-height: 1.5;
-      word-wrap: break-word;
-      white-space: pre-wrap;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-      transition: background 0.2s;
-    }
-    .msg.user .bubble {
-      background: #10a37f;
-      color: #ffffff;
-      border-bottom-right-radius: 4px;
-    }
-    .msg.ai .bubble {
-      background: #f4f4f4;
-      color: #1a1a1a;
-      border-bottom-left-radius: 4px;
-      padding: 8px; /* ပုံအတွက် padding နည်းနည်းချိန်ညှိခြင်း */
-    }
+    #app-container { display: none; flex-direction: column; height: 100vh; width: 100%; background: #ffffff; }
+    #app-container.active { display: flex; }
+    .app-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #e5e5e5; background: #ffffff; flex-shrink: 0; z-index: 20; }
+    .app-header .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 17px; color: #333; }
+    .chat-area { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 16px 160px 16px; background: #ffffff; touch-action: pan-y; overscroll-behavior-y: contain; }
+    .chat-area::-webkit-scrollbar { width: 6px; }
+    .chat-area::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+    .msg { display: flex; margin-bottom: 20px; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .msg.user { justify-content: flex-end; }
+    .msg.ai { justify-content: flex-start; }
+    .msg .bubble { max-width: 80%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.5; word-wrap: break-word; white-space: pre-wrap; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: background 0.2s; }
+    .msg.user .bubble { background: #10a37f; color: #ffffff; border-bottom-right-radius: 4px; }
+    .msg.ai .bubble { background: #f4f4f4; color: #1a1a1a; border-bottom-left-radius: 4px; padding: 8px; }
     
     /* ==================== ⭐️ NEW IMAGE UI CSS ==================== */
-    .ai-image-container {
-      position: relative;
-      display: block;
-      width: 100%;
-      border-radius: 12px;
-      overflow: hidden;
-      cursor: pointer;
-      background: #eaeaea;
-    }
-    .ai-image-container img {
-      display: block;
-      width: 100%;
-      max-height: 70vh;
-      object-fit: contain;
-      margin: 0 !important;
-      border-radius: 12px;
-    }
-    .ai-image-menu-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 36px;
-      height: 36px;
-      background: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      cursor: pointer;
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      z-index: 10;
-    }
-    .ai-image-menu-btn:active {
-      background: rgba(0, 0, 0, 0.7);
-    }
+    .ai-image-container { position: relative; display: block; width: 100%; border-radius: 12px; overflow: hidden; cursor: pointer; background: #eaeaea; }
+    .ai-image-container img { display: block; width: 100%; max-height: 70vh; object-fit: contain; margin: 0 !important; border-radius: 12px; }
+    .ai-image-menu-btn { position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; background: rgba(0, 0, 0, 0.5); color: #fff; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 10; }
+    .ai-image-menu-btn:active { background: rgba(0, 0, 0, 0.7); }
 
     /* Fullscreen Image Viewer */
-    #fullscreen-image-viewer {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 9999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-    #fullscreen-image-viewer.active {
-      display: flex;
-    }
-    #fullscreen-image-viewer img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      touch-action: pinch-zoom; /* Fullscreen မှာ ဆွဲချဲ့လို့ရမယ် */
-    }
+    #fullscreen-image-viewer { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); z-index: 9999; display: none; align-items: center; justify-content: center; }
+    #fullscreen-image-viewer.active { display: flex; }
+    #fullscreen-image-viewer img { max-width: 100%; max-height: 100%; object-fit: contain; touch-action: pinch-zoom; }
 
-    .image-error {
-      color: #c62828;
-      font-size: 14px;
-      line-height: 1.5;
-      padding: 10px;
-    }
-
-    .typing {
-      display: inline-flex;
-      gap: 4px;
-      padding: 4px 0;
-    }
-    .typing span {
-      width: 8px;
-      height: 8px;
-      background: #999;
-      border-radius: 50%;
-      animation: blink 1.4s infinite both;
-    }
+    .image-error { color: #c62828; font-size: 14px; line-height: 1.5; padding: 10px; }
+    .typing { display: inline-flex; gap: 4px; padding: 4px 0; }
+    .typing span { width: 8px; height: 8px; background: #999; border-radius: 50%; animation: blink 1.4s infinite both; }
     .typing span:nth-child(2) { animation-delay: 0.2s; }
     .typing span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes blink {
-      0%, 80%, 100% { opacity: 0.3; }
-      40% { opacity: 1; }
-    }
+    @keyframes blink { 0%, 80%, 100% { opacity: 0.3; } 40% { opacity: 1; } }
 
-    .input-area {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 12px 16px 20px 16px;
-      background: #ffffff;
-      border-top: 1px solid #e5e5e5;
-      z-index: 10;
-    }
-    .input-row {
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .input-row textarea {
-      flex: 1;
-      padding: 12px 16px;
-      border: 1px solid #e0e0e0;
-      border-radius: 24px;
-      font-size: 15px;
-      resize: none;
-      outline: none;
-      max-height: 120px;
-      min-height: 48px;
-      line-height: 1.4;
-      background: #f9f9f9;
-      transition: all 0.2s;
-    }
-    .input-row textarea:focus {
-      border-color: #10a37f;
-      background: #fff;
-    }
-    .send-btn {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: #10a37f;
-      color: white;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-      transition: background 0.2s;
-    }
-    .send-btn:hover {
-      background: #0d8a6a;
-    }
-    .send-btn:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
+    .input-area { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px 16px 20px 16px; background: #ffffff; border-top: 1px solid #e5e5e5; z-index: 10; }
+    .input-row { display: flex; align-items: flex-end; gap: 10px; max-width: 800px; margin: 0 auto; }
+    .input-row textarea { flex: 1; padding: 12px 16px; border: 1px solid #e0e0e0; border-radius: 24px; font-size: 15px; resize: none; outline: none; max-height: 120px; min-height: 48px; line-height: 1.4; background: #f9f9f9; transition: all 0.2s; }
+    .input-row textarea:focus { border-color: #10a37f; background: #fff; }
+    .send-btn { width: 48px; height: 48px; border-radius: 50%; background: #10a37f; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; transition: background 0.2s; }
+    .send-btn:hover { background: #0d8a6a; }
+    .send-btn:disabled { background: #ccc; cursor: not-allowed; }
 
-    .error-text {
-      color: #dc3545;
-      text-align: center;
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-    .success-text {
-      color: #28a745;
-      text-align: center;
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
+    .error-text { color: #dc3545; text-align: center; font-size: 14px; margin-bottom: 10px; }
+    .success-text { color: #28a745; text-align: center; font-size: 14px; margin-bottom: 10px; }
     .hidden { display: none !important; }
 
-    /* ChatGPT-like menus, attachments, and dialogs */
     .header-actions { display:flex; align-items:center; gap:8px; position:relative; }
     .icon-btn { width:40px; height:40px; border:1px solid #e5e5e5; border-radius:50%; background:#fff; color:#222; font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
     .icon-btn:active, .menu-item:active, .attach-option:active { background:#f0f0f0; }
@@ -456,73 +119,47 @@
 </head>
 <body>
 
-  <!-- ==================== LOGIN PAGE ==================== -->
   <div id="auth-container">
     <div class="auth-box">
       <h1>🐝 BeeChat AI</h1>
-
       <div class="welcome-features">
         <div class="feature-item">
-          <span class="icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>
-            </svg>
-          </span>
+          <span class="icon"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg></span>
           <span>သင့်စိတ်ကူးတွေကို အသက်သွင်းပြီး အလုပ်တွေ ပြီးမြောက်အောင် လုပ်ဆောင်ပါ</span>
         </div>
-
         <div class="feature-item">
-          <span class="icon">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 16v-4M12 8h.01"/>
-            </svg>
-          </span>
+          <span class="icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
           <span>BeeChat AI က အမှားတွေ လုပ်နိုင်ပါတယ်၊ အရေးကြီးတာတွေကို စစ်ဆေးပါ</span>
         </div>
-
         <div class="feature-item">
-          <span class="icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-              <path d="M17 11l2 2 4-4"/>
-            </svg>
-          </span>
+          <span class="icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M17 11l2 2 4-4"/></svg></span>
           <span>Chat တွေကို ပြန်လည်စစ်ဆေးပြီး ကျွန်တော်တို့ရဲ့ AI Model တွေ တိုးတက်အောင် အသုံးပြုနိုင်ပါတယ်</span>
         </div>
       </div>
-
       <div id="auth-message"></div>
-
       <button class="btn-google" onclick="signInWithGoogle()">
         <img src="https://www.google.com/favicon.ico" alt="Google" />
         Continue with Google
       </button>
-
       <div class="divider"><span>OR</span></div>
-
       <input type="email" id="email" placeholder="📧 Email" />
       <input type="password" id="password" placeholder="🔒 Password" />
-
       <button class="btn-primary" onclick="signUp()">📝 Register</button>
       <button class="btn-secondary" onclick="signIn()">🔑 Login</button>
       <button class="btn-skip" onclick="skipLogin()">Skip</button>
     </div>
   </div>
 
-  <!-- ==================== CHAT PAGE ==================== -->
   <div id="app-container">
     <div class="app-header">
       <div class="logo">🐝 BeeChat AI</div>
       <div class="header-actions">
-        <button class="icon-btn" type="button" onclick="newChat()" title="New chat" aria-label="New chat">＋</button>
-        <button class="icon-btn" type="button" onclick="toggleTopMenu()" title="Menu" aria-label="Menu">☰</button>
+        <button class="icon-btn" type="button" onclick="newChat()" title="New chat">＋</button>
+        <button class="icon-btn" type="button" onclick="toggleTopMenu()" title="Menu">☰</button>
         <div id="top-menu" class="popup-menu hidden">
           <button class="menu-item" onclick="newChat(); closeTopMenu()"><span class="mi-icon">✏️</span><span>စကားဝိုင်းအသစ် (New chat)</span></button>
           <button class="menu-item" onclick="openHistory(); closeTopMenu()"><span class="mi-icon">🕘</span><span>Chat History</span></button>
           <button class="menu-item" onclick="openHistory(); closeTopMenu()"><span class="mi-icon">🔎</span><span>စကားဝိုင်းဟောင်း ရှာရန်</span></button>
-          <button class="menu-item" onclick="generateImageFromMenu(); closeTopMenu()"><span class="mi-icon">🎨</span><span></span></button>
           <button class="menu-item" onclick="openSettings(); closeTopMenu()"><span class="mi-icon">⚙️</span><span>Settings</span></button>
           <div class="menu-separator"></div>
           <button class="menu-item" onclick="clearAllChat(); closeTopMenu()"><span class="mi-icon">🗑️</span><span>Chat အားလုံးဖျက်ရန်</span></button>
@@ -541,16 +178,15 @@
       <div id="attachment-preview" class="attachment-preview">
         <img id="attachment-thumb" alt="Selected attachment" style="display:none;">
         <div id="attachment-info" class="attachment-info"></div>
-        <button type="button" class="remove-attachment" onclick="clearAttachment()" aria-label="Remove attachment">×</button>
+        <button type="button" class="remove-attachment" onclick="clearAttachment()">×</button>
       </div>
       <div class="input-row">
         <div class="attach-wrap">
-          <button class="attach-btn" type="button" onclick="toggleAttachMenu()" aria-label="Attach file" title="Attach">＋</button>
+          <button class="attach-btn" type="button" onclick="toggleAttachMenu()">＋</button>
           <div id="attach-menu" class="attach-menu hidden">
             <button class="attach-option" onclick="openCamera()"><span>📷</span> Camera</button>
-            <button class="attach-option" onclick="openGallery()"><span>🖼️</span> Gallery / ပုံရွေးရန်</button>
-            <button class="attach-option" onclick="openFiles()"><span>📁</span> Files / ဖိုင်ရွေးရန်</button>
-            <button class="attach-option" onclick="insertMention()"><span>@</span> Mention / အကြောင်းအရာထည့်ရန်</button>
+            <button class="attach-option" onclick="openGallery()"><span>🖼️</span> Gallery</button>
+            <button class="attach-option" onclick="openFiles()"><span>📁</span> Files</button>
           </div>
         </div>
         <textarea id="prompt" rows="1" placeholder="မက်ဆေ့ချ် ရိုက်ထည့်ပါ..."></textarea>
@@ -563,135 +199,60 @@
     <div id="modal-root"></div>
   </div>
 
-  <!-- ⭐️ Fullscreen Image Viewer (ပုံကို အပြည့်ကြည့်ရန်) -->
   <div id="fullscreen-image-viewer" onclick="closeFullscreenImage()">
     <img id="fullscreen-img" src="" alt="Fullscreen" onclick="event.stopPropagation()">
   </div>
 
-  <!-- ==================== JAVASCRIPT ==================== -->
   <script>
-    // ============================================================
-    // ⭐️ APK မှာ အပေါ်ကို ဆွဲချရင် Refresh မဖြစ်အောင် လုံးဝ တားဆီးခြင်း
-    // ============================================================
     document.addEventListener('touchmove', function(e) {
-        // လက်နှစ်ချောင်းနဲ့ ဆွဲချဲ့တာကို ပိတ်မယ် (Fullscreen မှာကြည့်မယ်ဆိုရင် ခြွင်းချက်ထားမယ်)
-        if (e.touches.length > 1 && !e.target.closest('#fullscreen-image-viewer')) {
-            e.preventDefault();
-        }
+        if (e.touches.length > 1 && !e.target.closest('#fullscreen-image-viewer')) { e.preventDefault(); }
     }, { passive: false });
-
     let touchStartY = 0;
-    
-    document.addEventListener('touchstart', function(e) {
-        // ထိလိုက်တဲ့နေရာကို မှတ်ထားမယ်
-        if (e.touches.length === 1) {
-            touchStartY = e.touches[0].clientY;
-        }
-    }, { passive: false });
-
+    document.addEventListener('touchstart', function(e) { if (e.touches.length === 1) { touchStartY = e.touches[0].clientY; } }, { passive: false });
     document.addEventListener('touchmove', function(e) {
         if (e.touches.length === 1) {
-            let touchCurrentY = e.touches[0].clientY;
-            let touchDiffY = touchCurrentY - touchStartY;
-            
-            // Chat area က ထိပ်ဆုံးမှာရှိပြီး အောက်ကို ဆွဲချရင် Refresh မဖြစ်အောင် တားမယ်
+            let touchDiffY = e.touches[0].clientY - touchStartY;
             let chatArea = document.getElementById('chat-area');
-            if (chatArea && chatArea.scrollTop <= 0 && touchDiffY > 0) {
-                e.preventDefault();
-            }
+            if (chatArea && chatArea.scrollTop <= 0 && touchDiffY > 0) { e.preventDefault(); }
         }
     }, { passive: false });
 
-    // ============================================================
-    // ⚠️ Supabase (Login/Register/Database)
-    // ============================================================
     const SUPABASE_URL = 'https://zrcekvtzncenoeppijig.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_TuA7BebA5lNFg_32yPzfdw_E9OHIqQf';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // ============================================================
-    // Groq AI via Cloudflare Worker (API key stays server-side)
-    // ============================================================
     const GROQ_API_URL = 'https://square-feather-e7a5.klay91680.workers.dev';
-
-    // ============================================================
-    // ⚠️ Cloudflare Workers AI Image API URL
-    // ============================================================
     const IMAGE_API_URL = 'https://beechat-image-api.seinmyint786777.workers.dev';
 
-    // ============================================================
-    // ChatGPT-style menu, attachment picker, history and settings
-    // ============================================================
     let selectedAttachment = null;
     let selectedAttachmentDataUrl = null;
     let currentChatStartedAt = Date.now();
 
-    function toggleTopMenu() {
-      document.getElementById('top-menu').classList.toggle('hidden');
-      document.getElementById('attach-menu').classList.add('hidden');
-    }
-    function closeTopMenu() {
-      document.getElementById('top-menu').classList.add('hidden');
-    }
-    function toggleAttachMenu() {
-      document.getElementById('attach-menu').classList.toggle('hidden');
-      closeTopMenu();
-    }
-    function closeAttachMenu() {
-      document.getElementById('attach-menu').classList.add('hidden');
-    }
-    function openCamera() {
-      closeAttachMenu();
-      document.getElementById('camera-input').click();
-    }
-    function openGallery() {
-      closeAttachMenu();
-      document.getElementById('gallery-input').click();
-    }
-    function openFiles() {
-      closeAttachMenu();
-      document.getElementById('files-input').click();
-    }
-    function insertMention() {
-      closeAttachMenu();
-      const input = document.getElementById('prompt');
-      input.value += (input.value && !input.value.endsWith(' ') ? ' ' : '') + '@';
-      input.focus();
-      input.dispatchEvent(new Event('input'));
-    }
+    function toggleTopMenu() { document.getElementById('top-menu').classList.toggle('hidden'); document.getElementById('attach-menu').classList.add('hidden'); }
+    function closeTopMenu() { document.getElementById('top-menu').classList.add('hidden'); }
+    function toggleAttachMenu() { document.getElementById('attach-menu').classList.toggle('hidden'); closeTopMenu(); }
+    function closeAttachMenu() { document.getElementById('attach-menu').classList.add('hidden'); }
+    function openCamera() { closeAttachMenu(); document.getElementById('camera-input').click(); }
+    function openGallery() { closeAttachMenu(); document.getElementById('gallery-input').click(); }
+    function openFiles() { closeAttachMenu(); document.getElementById('files-input').click(); }
     function clearAttachment() {
-      selectedAttachment = null;
-      selectedAttachmentDataUrl = null;
+      selectedAttachment = null; selectedAttachmentDataUrl = null;
       document.getElementById('attachment-preview').style.display = 'none';
-      document.getElementById('camera-input').value = '';
-      document.getElementById('gallery-input').value = '';
-      document.getElementById('files-input').value = '';
+      document.getElementById('camera-input').value = ''; document.getElementById('gallery-input').value = ''; document.getElementById('files-input').value = '';
     }
     function handleAttachmentSelection(event) {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
-      const maxSize = 100 * 1024 * 1024;
-      if (file.size > maxSize) {
-        alert('ဖိုင်အရွယ်အစား 100MB ထက် မကျော်ပါစေနဲ့။');
-        event.target.value = '';
-        return;
-      }
+      if (file.size > 100 * 1024 * 1024) { alert('100MB ထက် မကျော်ပါစေနဲ့။'); event.target.value = ''; return; }
       selectedAttachment = file;
       const preview = document.getElementById('attachment-preview');
       const thumb = document.getElementById('attachment-thumb');
       document.getElementById('attachment-info').textContent = file.name + ' (' + formatFileSize(file.size) + ')';
       if (file.type && file.type.startsWith('image/')) {
         const reader = new FileReader();
-        reader.onload = () => {
-          selectedAttachmentDataUrl = String(reader.result || '');
-          thumb.src = selectedAttachmentDataUrl;
-          thumb.style.display = 'block';
-        };
+        reader.onload = () => { selectedAttachmentDataUrl = String(reader.result || ''); thumb.src = selectedAttachmentDataUrl; thumb.style.display = 'block'; };
         reader.readAsDataURL(file);
-      } else {
-        selectedAttachmentDataUrl = null;
-        thumb.style.display = 'none';
-      }
+      } else { selectedAttachmentDataUrl = null; thumb.style.display = 'none'; }
       preview.style.display = 'flex';
       closeAttachMenu();
     }
@@ -703,17 +264,8 @@
     function newChat() {
       const chatArea = document.getElementById('chat-area');
       chatArea.innerHTML = '<div class="msg ai"><div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div></div>';
-      document.getElementById('prompt').value = '';
-      document.getElementById('prompt').style.height = 'auto';
-      clearAttachment();
-      currentChatStartedAt = Date.now();
-      closeTopMenu();
-      closeAttachMenu();
-    }
-    function generateImageFromMenu() {
-      closeTopMenu();
-      document.getElementById('prompt').focus();
-      alert('ပုံဖော်ချင်တဲ့အကြောင်းအရာကို စာရိုက်ပြီး “🎨 ပုံဖော်မယ်” ကိုနှိပ်ပါ။');
+      document.getElementById('prompt').value = ''; document.getElementById('prompt').style.height = 'auto';
+      clearAttachment(); currentChatStartedAt = Date.now(); closeTopMenu(); closeAttachMenu();
     }
     function openHistory() {
       closeTopMenu();
@@ -722,16 +274,12 @@
         const label = (item.prompt || 'ပုံ/ဖိုင်') + (item.created_at ? ' · ' + new Date(item.created_at).toLocaleString() : '');
         return '<div class="history-item" data-history-index="' + index + '">' + escapeHtml(label) + '</div>';
       }).join('');
-      showModal('🕘 Chat History', '<input id="history-search" class="history-search" placeholder="စကားဝိုင်း ရှာရန်..." oninput="filterHistory()"><div id="history-list">' +
-        (items || '<p class="modal-note">သိမ်းထားတဲ့ စကားဝိုင်း မရှိသေးပါ။</p>') + '</div>');
+      showModal('🕘 Chat History', '<input id="history-search" class="history-search" placeholder="စကားဝိုင်း ရှာရန်..." oninput="filterHistory()"><div id="history-list">' + (items || '<p class="modal-note">သိမ်းထားတဲ့ စကားဝိုင်း မရှိသေးပါ။</p>') + '</div>');
       document.querySelectorAll('[data-history-index]').forEach(el => {
         el.addEventListener('click', () => {
-          const reverseIndex = Number(el.getAttribute('data-history-index'));
-          const item = history[reverseIndex];
-          if (!item) return;
-          closeModal();
-          const area = document.getElementById('chat-area');
-          area.innerHTML = '';
+          const item = history[Number(el.getAttribute('data-history-index'))];
+          if (!item) return; closeModal();
+          const area = document.getElementById('chat-area'); area.innerHTML = '';
           if (item.prompt) area.innerHTML += '<div class="msg user"><div class="bubble">' + escapeHtml(item.prompt) + '</div></div>';
           if (item.response) area.innerHTML += '<div class="msg ai"><div class="bubble">' + escapeHtml(item.response) + '</div></div>';
           if (item.image_url) area.innerHTML += createImageMessage(item.image_url);
@@ -741,191 +289,72 @@
     }
     function filterHistory() {
       const q = (document.getElementById('history-search').value || '').toLowerCase();
-      document.querySelectorAll('#history-list .history-item').forEach(el => {
-        el.style.display = el.textContent.toLowerCase().includes(q) ? 'block' : 'none';
-      });
+      document.querySelectorAll('#history-list .history-item').forEach(el => { el.style.display = el.textContent.toLowerCase().includes(q) ? 'block' : 'none'; });
     }
     function openSettings() {
       closeTopMenu();
-      showModal('⚙️ Settings',
-        '<p class="modal-note">BeeChat AI အတွက် ရိုးရှင်းသော သတ်မှတ်ချက်များ</p>' +
-        '<button class="menu-item" onclick="showAbout()">ℹ️ App အကြောင်း</button>' +
-        '<button class="menu-item" onclick="clearAllChat(); closeModal()">🗑️ Chat History အားလုံးဖျက်ရန်</button>' +
-        '<p class="modal-note">မှတ်ချက် - AI စွမ်းဆောင်ရည်များသည် ချိတ်ဆက်ထားသော Cloudflare Worker/API ပေါ် မူတည်ပါသည်။</p>');
+      showModal('⚙️ Settings', '<p class="modal-note">BeeChat AI အတွက် ရိုးရှင်းသော သတ်မှတ်ချက်များ</p><button class="menu-item" onclick="showAbout()">ℹ️ App အကြောင်း</button><button class="menu-item" onclick="clearAllChat(); closeModal()">🗑️ Chat History အားလုံးဖျက်ရန်</button>');
     }
-    function showAbout() {
-      showModal('🐝 BeeChat AI', '<p class="modal-note">စာဖြင့်မေးမြန်းခြင်း၊ ပုံဖန်တီးခြင်းနှင့် ဖိုင်ရွေးချယ်ခြင်းကို တစ်နေရာတည်းတွင် အသုံးပြုနိုင်သော BeeChat AI ဖြစ်ပါတယ်။</p>');
-    }
+    function showAbout() { showModal('🐝 BeeChat AI', '<p class="modal-note">စာဖြင့်မေးမြန်းခြင်း၊ ပုံဖန်တီးခြင်းနှင့် ဖိုင်ရွေးချယ်ခြင်းကို တစ်နေရာတည်းတွင် အသုံးပြုနိုင်သော BeeChat AI ဖြစ်ပါတယ်။</p>'); }
     function showModal(title, bodyHtml) {
       const root = document.getElementById('modal-root');
-      root.innerHTML = '<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="app-modal"><div class="modal-head"><h3>' + escapeHtml(title) + '</h3><button class="modal-close" onclick="closeModal()" aria-label="Close">×</button></div><div>' + bodyHtml + '</div></div></div>';
+      root.innerHTML = '<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="app-modal"><div class="modal-head"><h3>' + escapeHtml(title) + '</h3><button class="modal-close" onclick="closeModal()">×</button></div><div>' + bodyHtml + '</div></div></div>';
     }
-    function closeModal() {
-      document.getElementById('modal-root').innerHTML = '';
-    }
+    function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
     document.addEventListener('click', function(e) {
       if (!e.target.closest('.header-actions')) closeTopMenu();
       if (!e.target.closest('.attach-wrap')) closeAttachMenu();
     });
 
-
-    // ============================================================
-    // AUTHENTICATION
-    // ============================================================
-
     async function signInWithGoogle() {
-      const msg = document.getElementById('auth-message');
-      msg.innerHTML = '<p class="success-text">⏳ Google ဖွင့်နေသည်...</p>';
-
-      const { data, error } = await supabaseClient.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin
-        }
-      });
-
-      if (error) {
-        msg.innerHTML = '<p class="error-text">❌ ' + error.message + '</p>';
-      }
+      const msg = document.getElementById('auth-message'); msg.innerHTML = '<p class="success-text">⏳ Google ဖွင့်နေသည်...</p>';
+      const { data, error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+      if (error) msg.innerHTML = '<p class="error-text">❌ ' + error.message + '</p>';
     }
-
     async function signUp() {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const msg = document.getElementById('auth-message');
-
-      if (!email || !password) {
-        msg.innerHTML = '<p class="error-text">Email နဲ့ Password ထည့်ပါ။</p>';
-        return;
-      }
-      if (password.length < 6) {
-        msg.innerHTML = '<p class="error-text">Password အနည်းဆုံး ၆ လုံး ထည့်ပါ။</p>';
-        return;
-      }
-
+      const email = document.getElementById('email').value.trim(); const password = document.getElementById('password').value; const msg = document.getElementById('auth-message');
+      if (!email || !password) { msg.innerHTML = '<p class="error-text">Email နဲ့ Password ထည့်ပါ။</p>'; return; }
+      if (password.length < 6) { msg.innerHTML = '<p class="error-text">Password အနည်းဆုံး ၆ လုံး ထည့်ပါ။</p>'; return; }
       msg.innerHTML = '<p class="success-text">⏳ စောင့်ပါ...</p>';
-
       const { data, error } = await supabaseClient.auth.signUp({ email, password });
-
-      if (error) {
-        msg.innerHTML = '<p class="error-text">❌ ' + error.message + '</p>';
-        return;
-      }
-
-      if (data && data.session) {
-        msg.innerHTML = '';
-        showApp(data.user);
-      } else {
-        msg.innerHTML = '<p class="success-text">✅ Email ကို စစ်ဆေးပါ။</p>';
-      }
+      if (error) { msg.innerHTML = '<p class="error-text">❌ ' + error.message + '</p>'; return; }
+      if (data && data.session) { msg.innerHTML = ''; showApp(data.user); } else { msg.innerHTML = '<p class="success-text">✅ Email ကို စစ်ဆေးပါ။</p>'; }
     }
-
     async function signIn() {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const msg = document.getElementById('auth-message');
-
-      if (!email || !password) {
-        msg.innerHTML = '<p class="error-text">Email နဲ့ Password ထည့်ပါ။</p>';
-        return;
-      }
-
+      const email = document.getElementById('email').value.trim(); const password = document.getElementById('password').value; const msg = document.getElementById('auth-message');
+      if (!email || !password) { msg.innerHTML = '<p class="error-text">Email နဲ့ Password ထည့်ပါ။</p>'; return; }
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        msg.innerHTML = '<p class="error-text">❌ ' + error.message + '</p>';
-      } else {
-        msg.innerHTML = '';
-        showApp(data.user);
-      }
+      if (error) { msg.innerHTML = '<p class="error-text">❌ ' + error.message + '</p>'; } else { msg.innerHTML = ''; showApp(data.user); }
     }
-
     async function skipLogin() {
       document.getElementById('auth-container').style.display = 'none';
       document.getElementById('app-container').classList.add('active');
       document.getElementById('chat-area').innerHTML = '<div class="msg ai"><div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div></div>';
-      
       loadLocalChat();
     }
-
     async function signOut() {
       await supabaseClient.auth.signOut();
       document.getElementById('app-container').classList.remove('active');
       document.getElementById('auth-container').style.display = 'flex';
     }
-
     function showApp(user) {
       document.getElementById('auth-container').style.display = 'none';
       document.getElementById('app-container').classList.add('active');
-      
-      loadLocalChat();
-      loadHistory();
-      saveDeviceInfo();
+      loadLocalChat(); loadHistory(); saveDeviceInfo();
     }
-
-    // ============================================================
-    // ⭐️ ဖုန်းအမျိုးအစား ဖမ်းယူခြင်း (Device Detection)
-    // ============================================================
-
     function getDeviceInfo() {
-      const ua = navigator.userAgent;
-      let device = "Unknown";
-      let os = "Unknown";
-      let browser = "Unknown";
-
-      if (/android/i.test(ua)) os = "Android";
-      else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
-      else if (/Windows/i.test(ua)) os = "Windows";
-      else if (/Mac/i.test(ua)) os = "MacOS";
-      else if (/Linux/i.test(ua)) os = "Linux";
-
-      if (/Samsung/i.test(ua)) device = "Samsung";
-      else if (/Xiaomi|Redmi|POCO/i.test(ua)) device = "Xiaomi";
-      else if (/Huawei/i.test(ua)) device = "Huawei";
-      else if (/OPPO/i.test(ua)) device = "OPPO";
-      else if (/vivo/i.test(ua)) device = "Vivo";
-      else if (/OnePlus/i.test(ua)) device = "OnePlus";
-      else if (/iPhone/i.test(ua)) device = "iPhone";
-      else if (/iPad/i.test(ua)) device = "iPad";
-      else if (/Realme/i.test(ua)) device = "Realme";
-      else if (/Infinix/i.test(ua)) device = "Infinix";
-      else if (/Tecno/i.test(ua)) device = "Tecno";
-
-      if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = "Chrome";
-      else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
-      else if (/Firefox/i.test(ua)) browser = "Firefox";
-      else if (/Edg/i.test(ua)) browser = "Edge";
-
+      const ua = navigator.userAgent; let device = "Unknown", os = "Unknown", browser = "Unknown";
+      if (/android/i.test(ua)) os = "Android"; else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS"; else if (/Windows/i.test(ua)) os = "Windows"; else if (/Mac/i.test(ua)) os = "MacOS"; else if (/Linux/i.test(ua)) os = "Linux";
+      if (/Samsung/i.test(ua)) device = "Samsung"; else if (/Xiaomi|Redmi|POCO/i.test(ua)) device = "Xiaomi"; else if (/Huawei/i.test(ua)) device = "Huawei"; else if (/OPPO/i.test(ua)) device = "OPPO"; else if (/vivo/i.test(ua)) device = "Vivo"; else if (/OnePlus/i.test(ua)) device = "OnePlus"; else if (/iPhone/i.test(ua)) device = "iPhone"; else if (/iPad/i.test(ua)) device = "iPad"; else if (/Realme/i.test(ua)) device = "Realme"; else if (/Infinix/i.test(ua)) device = "Infinix"; else if (/Tecno/i.test(ua)) device = "Tecno";
+      if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = "Chrome"; else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari"; else if (/Firefox/i.test(ua)) browser = "Firefox"; else if (/Edg/i.test(ua)) browser = "Edge";
       return { device, os, browser, userAgent: ua };
     }
-
     async function saveDeviceInfo() {
-      const info = getDeviceInfo();
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (!user) return;
-
-      const { data: existing } = await supabaseClient
-        .from('user_devices')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('device_name', info.device)
-        .eq('os_name', info.os)
-        .limit(1);
-
+      const info = getDeviceInfo(); const { data: { user } } = await supabaseClient.auth.getUser(); if (!user) return;
+      const { data: existing } = await supabaseClient.from('user_devices').select('id').eq('user_id', user.id).eq('device_name', info.device).eq('os_name', info.os).limit(1);
       if (existing && existing.length > 0) return;
-
-      await supabaseClient.from('user_devices').insert({
-        user_id: user.id,
-        device_name: info.device,
-        os_name: info.os,
-        browser_name: info.browser,
-        user_agent: info.userAgent
-      });
+      await supabaseClient.from('user_devices').insert({ user_id: user.id, device_name: info.device, os_name: info.os, browser_name: info.browser, user_agent: info.userAgent });
     }
-
-    // ============================================================
-    // AI CHAT
-    // ============================================================
 
     async function sendMessage() {
       const promptInput = document.getElementById('prompt');
@@ -934,169 +363,82 @@
       const attachmentDataUrl = selectedAttachmentDataUrl;
       const chatArea = document.getElementById('chat-area');
       const sendBtn = document.getElementById('send-btn');
-
       if (!prompt && !attachment) return;
       const userLabel = (prompt ? escapeHtml(prompt) : '') + (attachment ? '<br><span style="font-size:12px;opacity:.9">📎 ' + escapeHtml(attachment.name) + '</span>' : '');
       chatArea.innerHTML += '<div class="msg user"><div class="bubble">' + userLabel + '</div></div>';
-      promptInput.value = '';
-      promptInput.style.height = 'auto';
-      chatArea.scrollTop = chatArea.scrollHeight;
-
+      promptInput.value = ''; promptInput.style.height = 'auto'; chatArea.scrollTop = chatArea.scrollHeight;
       const typingId = 'typing-' + Date.now();
       chatArea.innerHTML += '<div class="msg ai" id="' + typingId + '"><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>';
-      chatArea.scrollTop = chatArea.scrollHeight;
-      sendBtn.disabled = true;
-
+      chatArea.scrollTop = chatArea.scrollHeight; sendBtn.disabled = true;
       try {
         if (!attachment && isImageGenerationRequest(prompt)) {
           const englishPrompt = await buildEnglishImagePrompt(prompt);
           const imageSrc = await requestGeneratedImage(englishPrompt);
-          const typingEl = document.getElementById(typingId);
-          if (typingEl) typingEl.remove();
-          chatArea.innerHTML += createImageMessage(imageSrc);
-          chatArea.scrollTop = chatArea.scrollHeight;
-          await saveChat(prompt, null, imageSrc);
-          return;
+          const typingEl = document.getElementById(typingId); if (typingEl) typingEl.remove();
+          chatArea.innerHTML += createImageMessage(imageSrc); chatArea.scrollTop = chatArea.scrollHeight;
+          await saveChat(prompt, null, imageSrc); return;
         }
-
         let aiResponse;
         if (attachment) {
           if (attachmentDataUrl && attachment.type.startsWith('image/')) {
-            aiResponse = await callGroqAI(prompt || 'ဒီပုံကို ကြည့်ပြီး မြန်မာလို ရှင်းပြပေးပါ။', {
-              fileName: attachment.name,
-              mimeType: attachment.type,
-              imageDataUrl: attachmentDataUrl
-            });
+            aiResponse = await callGroqAI(prompt || 'ဒီပုံကို ကြည့်ပြီး မြန်မာလို ရှင်းပြပေးပါ။', { fileName: attachment.name, mimeType: attachment.type, imageDataUrl: attachmentDataUrl });
           } else if (attachment.type && /^(text\/|application\/json)/i.test(attachment.type)) {
             const fileText = await readTextAttachment(attachment);
-            aiResponse = await callGroqAI((prompt ? prompt + '\n\n' : 'ဒီဖိုင်ကို စစ်ဆေးပြီး ရှင်းပြပါ။') +
-              '\n\n--- ဖိုင်အကြောင်းအရာ: ' + attachment.name + ' ---\n' + fileText);
+            aiResponse = await callGroqAI((prompt ? prompt + '\n\n' : 'ဒီဖိုင်ကို စစ်ဆေးပြီး ရှင်းပြပါ။') + '\n\n--- ဖိုင်အကြောင်းအရာ: ' + attachment.name + ' ---\n' + fileText);
           } else {
-            aiResponse = await callGroqAI((prompt ? prompt + '\n\n' : '') +
-              '[ဖိုင်တွဲထားသည်: ' + attachment.name + '။ ဒီဖိုင်အမျိုးအစားကို browser မှာ အလိုအလျောက်ဖတ်မရသေးပါ။ TXT/HTML/CSS/JS/JSON ဖိုင်များကို စမ်းကြည့်ပါ။]');
+            aiResponse = await callGroqAI((prompt ? prompt + '\n\n' : '') + '[ဖိုင်တွဲထားသည်: ' + attachment.name + '။ ဒီဖိုင်အမျိုးအစားကို browser မှာ အလိုအလျောက်ဖတ်မရသေးပါ။]');
           }
           clearAttachment();
         } else {
           aiResponse = await callGroqAI(prompt);
         }
-
         document.getElementById(typingId).remove();
         chatArea.innerHTML += '<div class="msg ai"><div class="bubble">' + escapeHtml(aiResponse) + '</div></div>';
         chatArea.scrollTop = chatArea.scrollHeight;
-
         await saveChat(prompt, aiResponse, null);
-
       } catch (err) {
         document.getElementById(typingId).remove();
         chatArea.innerHTML += '<div class="msg ai"><div class="bubble">❌ Error: ' + escapeHtml(err.message) + '</div></div>';
         chatArea.scrollTop = chatArea.scrollHeight;
-      } finally {
-        sendBtn.disabled = false;
-      }
+      } finally { sendBtn.disabled = false; }
     }
 
     async function callGroqAI(prompt, attachment = null) {
-      const payload = { prompt };
-      if (attachment) Object.assign(payload, attachment);
-      const response = await fetch(GROQ_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
+      const payload = { prompt }; if (attachment) Object.assign(payload, attachment);
+      const response = await fetch(GROQ_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.error || ('BeeChat AI request failed (HTTP ' + response.status + ')'));
-      }
-
-      if (typeof data.answer !== 'string' || !data.answer) {
-        throw new Error('Worker က AI အဖြေမမှန်တဲ့ပုံစံနဲ့ ပြန်ပေးထားပါတယ်။');
-      }
-
+      if (!response.ok) throw new Error(data.error || ('BeeChat AI request failed (HTTP ' + response.status + ')'));
+      if (typeof data.answer !== 'string' || !data.answer) throw new Error('Worker က AI အဖြေမမှန်တဲ့ပုံစံနဲ့ ပြန်ပေးထားပါတယ်။');
       return data.answer;
     }
 
-    // ============================================================
-    // CHAT ROUTING + IMAGE GENERATION
-    // ============================================================
-
     function isImageGenerationRequest(text) {
-      const t = String(text || '').trim().toLowerCase();
-      if (!t) return false;
-
-      const imageWords =
-        /ပုံ|ဓာတ်ပုံ|နောက်ခံပုံ|လိုဂို|ပိုစတာ|ကာတွန်း|ခွေး|ကြောင်|မျောက်|ငှက်|မြင်း|ဆင်/;
-
-      const createActions =
-        /ဖန်တီး|ဆွဲ|လုပ်ပေး|ထုတ်ပေး|ဖော်ပြ|ဖော်ပေး|လုပ်ပေးပါ|ဖန်တီးပေး/;
-
-      const englishImage =
-        /\b(image|picture|photo|illustration|wallpaper|logo|poster|avatar|artwork|drawing)\b/i;
-
-      const englishAction =
-        /\b(generate|create|draw|make|design|render|illustrate)\b/i;
-
+      const t = String(text || '').trim().toLowerCase(); if (!t) return false;
+      const imageWords = /ပုံ|ဓာတ်ပုံ|နောက်ခံပုံ|လိုဂို|ပိုစတာ|ကာတွန်း|ခွေး|ကြောင်|မျောက်|ငှက်|မြင်း|ဆင်/;
+      const createActions = /ဖန်တီး|ဆွဲ|လုပ်ပေး|ထုတ်ပေး|ဖော်ပြ|ဖော်ပေး|လုပ်ပေးပါ|ဖန်တီးပေး/;
+      const englishImage = /\b(image|picture|photo|illustration|wallpaper|logo|poster|avatar|artwork|drawing)\b/i;
+      const englishAction = /\b(generate|create|draw|make|design|render|illustrate)\b/i;
       if (imageWords.test(t) && createActions.test(t)) return true;
       if (englishImage.test(t) && englishAction.test(t)) return true;
-
-      if (/\b(dog|cat|monkey|bird|horse|elephant|rabbit|lion|tiger)\b/i.test(t)
-          && /\b(image|picture|photo|draw|create|generate)\b/i.test(t)) {
-        return true;
-      }
-
+      if (/\b(dog|cat|monkey|bird|horse|elephant|rabbit|lion|tiger)\b/i.test(t) && /\b(image|picture|photo|draw|create|generate)\b/i.test(t)) return true;
       return false;
     }
     async function buildEnglishImagePrompt(userPrompt) {
       const text = String(userPrompt || '').trim();
-
-      const animals = [
-        { words: ['မျောက်', 'monkey'], name: 'monkey' },
-        { words: ['ခွေး', 'dog'], name: 'dog' },
-        { words: ['ကြောင်', 'cat'], name: 'cat' },
-        { words: ['ငှက်', 'bird'], name: 'bird' },
-        { words: ['မြင်း', 'horse'], name: 'horse' },
-        { words: ['ဆင်', 'elephant'], name: 'elephant' },
-        { words: ['ယုန်', 'rabbit'], name: 'rabbit' },
-        { words: ['ခြင်္သေ့', 'lion'], name: 'lion' },
-        { words: ['ကျား', 'tiger'], name: 'tiger' }
-      ];
-
-      const animal = animals.find(item =>
-        item.words.some(word => text.toLowerCase().includes(word.toLowerCase()))
-      );
-
-      if (animal) {
-        return `Create an image of a ${animal.name}. The main subject MUST be a ${animal.name}. Do not show a cat, or any other animal instead. User's original request: ${text}`;
-      }
-
-      const instruction =
-        'Translate this image request into English for an image generator. ' +
-        'Preserve the exact subject, objects, colors, setting, and style. ' +
-        'Return only the English image prompt.\nUser request: ' + text;
-
+      const animals = [{ words: ['မျောက်', 'monkey'], name: 'monkey' }, { words: ['ခွေး', 'dog'], name: 'dog' }, { words: ['ကြောင်', 'cat'], name: 'cat' }, { words: ['ငှက်', 'bird'], name: 'bird' }, { words: ['မြင်း', 'horse'], name: 'horse' }, { words: ['ဆင်', 'elephant'], name: 'elephant' }, { words: ['ယုန်', 'rabbit'], name: 'rabbit' }, { words: ['ခြင်္သေ့', 'lion'], name: 'lion' }, { words: ['ကျား', 'tiger'], name: 'tiger' }];
+      const animal = animals.find(item => item.words.some(word => text.toLowerCase().includes(word.toLowerCase())));
+      if (animal) return `Create an image of a ${animal.name}. The main subject MUST be a ${animal.name}. Do not show a cat, or any other animal instead. User's original request: ${text}`;
+      const instruction = 'Translate this image request into English for an image generator. Preserve the exact subject, objects, colors, setting, and style. Return only the English image prompt.\nUser request: ' + text;
       try {
         const translated = (await callGroqAI(instruction)).trim();
-        if (translated && translated.length > 5) {
-          return translated.slice(0, 1800);
-        }
-      } catch (e) {
-        // Translation မအောင်မြင်လျှင် မူရင်းစာကို အသုံးပြုမည်
-      }
-
+        if (translated && translated.length > 5) return translated.slice(0, 1800);
+      } catch (e) {}
       return text;
     }
     async function requestGeneratedImage(prompt) {
-      const response = await fetch(IMAGE_API_URL + '?prompt=' + encodeURIComponent(prompt), {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-      });
-      const responseText = await response.text();
-      let data;
-      try { data = JSON.parse(responseText); }
-      catch (parseErr) { throw new Error('Image API က JSON ပြန်မပေးပါ။'); }
+      const response = await fetch(IMAGE_API_URL + '?prompt=' + encodeURIComponent(prompt), { method: 'GET', headers: { 'Accept': 'application/json' } });
+      const responseText = await response.text(); let data;
+      try { data = JSON.parse(responseText); } catch (parseErr) { throw new Error('Image API က JSON ပြန်မပေးပါ။'); }
       if (!response.ok) throw new Error(data.error || data.message || ('Image API HTTP ' + response.status));
       if (data.error) throw new Error(data.error);
       const imageValue = data.image || data.image_url || data.url || data.b64_json || data.base64 || data.data;
@@ -1104,7 +446,6 @@
       if (!imageSrc) throw new Error('Image API က ပုံဒေတာ မပြန်ပေးပါ။');
       return imageSrc;
     }
-
     function readTextAttachment(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -1114,252 +455,113 @@
       });
     }
 
-    // ============================================================
-    // AI IMAGE GENERATION (⭐️ ဒီနေရာမှာ UI အသစ်ပြင်ဆင်ထားပါတယ်)
-    // ============================================================
-
     function normalizeImageSource(imageValue) {
       if (!imageValue) return null;
-
-      if (typeof imageValue === 'object') {
-        imageValue =
-          imageValue.url ||
-          imageValue.image ||
-          imageValue.image_url ||
-          imageValue.b64_json ||
-          imageValue.base64 ||
-          imageValue.data ||
-          null;
-      }
-
+      if (typeof imageValue === 'object') { imageValue = imageValue.url || imageValue.image || imageValue.image_url || imageValue.b64_json || imageValue.base64 || imageValue.data || null; }
       if (typeof imageValue !== 'string') return null;
-
-      let value = imageValue.trim();
-      if (!value) return null;
-
-      if (/^(https?:\/\/|data:image\/)/i.test(value)) {
-        return value;
-      }
-
-      if (/^[A-Za-z0-9+/=\s]+$/.test(value) && value.length > 100) {
-        value = value.replace(/\s/g, '');
-        return 'data:image/png;base64,' + value;
-      }
-
+      let value = imageValue.trim(); if (!value) return null;
+      if (/^(https?:\/\/|data:image\/)/i.test(value)) return value;
+      if (/^[A-Za-z0-9+/=\s]+$/.test(value) && value.length > 100) { value = value.replace(/\s/g, ''); return 'data:image/png;base64,' + value; }
       return value;
     }
 
-    // ⭐️ ပုံအတွက် HTML ဖန်တီးခြင်း (ဒေါင်းလုဒ်ခလုတ်အစား အစက်သုံးစက်ထည့်ထားသည်)
+    // ⭐️ ပြင်ဆင်ထားသော Function များ (Error မတက်အောင် ID သုံးထားသည်)
     function createImageMessage(imageValue) {
       const src = normalizeImageSource(imageValue);
-
-      if (!src) {
-        return '<div class="msg ai"><div class="bubble image-error">❌ API က ပုံဒေတာမမှန်တဲ့ပုံစံနဲ့ ပြန်ပေးထားပါတယ်။</div></div>';
-      }
-
+      if (!src) return '<div class="msg ai"><div class="bubble image-error">❌ API က ပုံဒေတာမမှန်တဲ့ပုံစံနဲ့ ပြန်ပေးထားပါတယ်။</div></div>';
       const safeSrc = escapeHtml(src);
-      // onclick အတွက် string ကို လုံခြုံအောင် ပြောင်းခြင်း
-      const jsSrc = JSON.stringify(src).replace(/</g, '\\u003c');
-
+      const imgId = 'img-' + Date.now() + Math.floor(Math.random() * 1000);
       return '<div class="msg ai"><div class="bubble">' +
-        '<div class="ai-image-container" onclick="openFullscreenImage(' + jsSrc + ')">' +
-          '<img src="' + safeSrc + '" alt="AI Image" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div class=image-error>❌ ပုံကိုဖွင့်မရပါ။</div>\';">' +
-          '<button class="ai-image-menu-btn" onclick="event.stopPropagation(); openImageMenu(' + jsSrc + ')">⋮</button>' +
+        '<div class="ai-image-container" onclick="openFullscreenImageById(\'' + imgId + '\')">' +
+          '<img id="' + imgId + '" src="' + safeSrc + '" alt="AI Image" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div class=image-error>❌ ပုံကိုဖွင့်မရပါ။</div>\';">' +
+          '<button class="ai-image-menu-btn" onclick="event.stopPropagation(); openImageMenuById(\'' + imgId + '\')">⋮</button>' +
         '</div>' +
       '</div></div>';
     }
 
-    // ⭐️ အစက်သုံးစက်နှိပ်ရင် ပေါ်လာမယ့် Menu (Auto Save ပါဝင်သည်)
-    function openImageMenu(imageSrc) {
+    function openImageMenuById(imgId) {
+      const imgElement = document.getElementById(imgId);
+      if (!imgElement) return;
       showModal('ပုံ ရွေးချယ်စရာများ', 
-        '<button class="menu-item" onclick="autoSaveImage(' + JSON.stringify(imageSrc).replace(/</g, '\\u003c') + '); closeModal();">' +
+        '<button class="menu-item" onclick="autoSaveImageById(\'' + imgId + '\'); closeModal();">' +
         '<span class="mi-icon">💾</span><span>ပုံကို သိမ်းဆည်းရန် (Auto Save)</span></button>'
       );
     }
 
-    // ⭐️ Auto Save လုပ်ဆောင်ချက်
-    async function autoSaveImage(imageSrc) {
+    async function autoSaveImageById(imgId) {
+      const imgElement = document.getElementById(imgId);
+      if (!imgElement) return;
+      const imageSrc = imgElement.src;
       try {
         if (imageSrc.startsWith('data:')) {
-          // Base64 ပုံဖြစ်ပါက တိုက်ရိုက်သိမ်းမည်
-          const a = document.createElement('a');
-          a.href = imageSrc;
-          a.download = 'beechat-ai-' + Date.now() + '.png';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          return;
+          const a = document.createElement('a'); a.href = imageSrc; a.download = 'beechat-ai-' + Date.now() + '.png';
+          document.body.appendChild(a); a.click(); a.remove(); return;
         }
-
-        // URL ပုံဖြစ်ပါက Blob အဖြစ်ပြောင်းပြီး သိမ်းမည်
         const response = await fetch(imageSrc, { mode: 'cors' });
         if (!response.ok) throw new Error('HTTP ' + response.status);
-
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = 'beechat-ai-' + Date.now() + '.png';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-
+        const blob = await response.blob(); const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = blobUrl; a.download = 'beechat-ai-' + Date.now() + '.png';
+        document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
       } catch (err) {
-        // CORS ပြဿနာတက်ရင် တိုက်ရိုက်ဖွင့်ပြီး သိမ်းခိုင်းမည်
         try {
-          const a = document.createElement('a');
-          a.href = imageSrc;
-          a.target = '_blank';
-          a.rel = 'noopener';
-          a.download = 'beechat-ai-' + Date.now() + '.png';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        } catch (fallbackErr) {
-          alert('ပုံသိမ်းဆည်းမရပါ: ' + err.message);
-        }
+          const a = document.createElement('a'); a.href = imageSrc; a.target = '_blank'; a.rel = 'noopener'; a.download = 'beechat-ai-' + Date.now() + '.png';
+          document.body.appendChild(a); a.click(); a.remove();
+        } catch (fallbackErr) { alert('ပုံသိမ်းဆည်းမရပါ: ' + err.message); }
       }
     }
 
-    // ⭐️ ပုံကို အပြည့်အဝ (Fullscreen) ကြည့်ရန်
-    function openFullscreenImage(src) {
+    function openFullscreenImageById(imgId) {
+      const imgElement = document.getElementById(imgId);
+      if (!imgElement) return;
       const viewer = document.getElementById('fullscreen-image-viewer');
-      const img = document.getElementById('fullscreen-img');
-      img.src = src;
+      const fullImg = document.getElementById('fullscreen-img');
+      fullImg.src = imgElement.src;
       viewer.classList.add('active');
     }
     function closeFullscreenImage() {
       const viewer = document.getElementById('fullscreen-image-viewer');
       const img = document.getElementById('fullscreen-img');
       viewer.classList.remove('active');
-      setTimeout(() => { img.src = ''; }, 300); // animation ပြီးမှ src ကို ရှင်းမည်
+      setTimeout(() => { img.src = ''; }, 300);
     }
-
-    async function generateImage() {
-      const promptInput = document.getElementById('prompt');
-      const prompt = promptInput.value.trim();
-      const chatArea = document.getElementById('chat-area');
-
-      if (!prompt) {
-        alert('ပုံဖော်ချင်တဲ့ စာသား ရိုက်ထည့်ပါ။');
-        return;
-      }
-
-      chatArea.innerHTML += '<div class="msg user"><div class="bubble">🎨 ' + escapeHtml(prompt) + '</div></div>';
-      promptInput.value = '';
-      promptInput.style.height = 'auto';
-      chatArea.scrollTop = chatArea.scrollHeight;
-
-      const typingId = 'typing-' + Date.now();
-      chatArea.innerHTML += '<div class="msg ai" id="' + typingId + '"><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div></div>';
-      chatArea.scrollTop = chatArea.scrollHeight;
-
-      try {
-        const englishPrompt = await buildEnglishImagePrompt(prompt);
-        const imageSrc = await requestGeneratedImage(englishPrompt);
-
-        const typingEl = document.getElementById(typingId);
-        if (typingEl) typingEl.remove();
-
-        chatArea.innerHTML += createImageMessage(imageSrc);
-        chatArea.scrollTop = chatArea.scrollHeight;
-
-        await saveChat(prompt, null, imageSrc);
-
-      } catch (err) {
-        const typingEl = document.getElementById(typingId);
-        if (typingEl) typingEl.remove();
-
-        chatArea.innerHTML += '<div class="msg ai"><div class="bubble">❌ Error: ' + escapeHtml(err.message) + '</div></div>';
-        chatArea.scrollTop = chatArea.scrollHeight;
-      }
-    }
-
-    // ============================================================
-    // DATABASE & LOCAL STORAGE
-    // ============================================================
 
     async function saveChat(prompt, response, imageUrl) {
       let history = JSON.parse(localStorage.getItem('beeChatHistory') || '[]');
-      history.push({
-        prompt: prompt,
-        response: response,
-        image_url: imageUrl,
-        created_at: new Date().toISOString()
-      });
+      history.push({ prompt: prompt, response: response, image_url: imageUrl, created_at: new Date().toISOString() });
       localStorage.setItem('beeChatHistory', JSON.stringify(history));
-
       const { data: { user } } = await supabaseClient.auth.getUser();
-      if (user) {
-        await supabaseClient.from('chats').insert({
-          user_id: user.id,
-          prompt: prompt,
-          response: response,
-          image_url: imageUrl
-        });
-      }
+      if (user) { await supabaseClient.from('chats').insert({ user_id: user.id, prompt: prompt, response: response, image_url: imageUrl }); }
     }
 
     function loadLocalChat() {
       const chatArea = document.getElementById('chat-area');
       const history = JSON.parse(localStorage.getItem('beeChatHistory') || '[]');
-
       if (history.length === 0) return;
       chatArea.innerHTML = '';
-
       history.forEach(item => {
-        if (item.prompt) {
-          chatArea.innerHTML += '<div class="msg user"><div class="bubble">' + escapeHtml(item.prompt) + '</div></div>';
-        }
-        if (item.response) {
-          chatArea.innerHTML += '<div class="msg ai"><div class="bubble">' + escapeHtml(item.response) + '</div></div>';
-        }
-        if (item.image_url) {
-          chatArea.innerHTML += createImageMessage(item.image_url);
-        }
+        if (item.prompt) chatArea.innerHTML += '<div class="msg user"><div class="bubble">' + escapeHtml(item.prompt) + '</div></div>';
+        if (item.response) chatArea.innerHTML += '<div class="msg ai"><div class="bubble">' + escapeHtml(item.response) + '</div></div>';
+        if (item.image_url) chatArea.innerHTML += createImageMessage(item.image_url);
       });
-
       chatArea.scrollTop = chatArea.scrollHeight;
     }
 
     async function loadHistory() {
-      const chatArea = document.getElementById('chat-area');
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) return;
-
-      const { data, error } = await supabaseClient
-        .from('chats')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
-        .limit(50);
-
-      if (error || !data) return;
+      await supabaseClient.from('chats').select('*').eq('user_id', user.id).order('created_at', { ascending: true }).limit(50);
     }
-
-    // ============================================================
-    // ⭐️ Chat အားလုံးဖျက်ခြင်း (Clear All System)
-    // ============================================================
 
     async function clearAllChat() {
       if (!confirm("Chat စာတွေအကုန် ဖျက်မှာ သေချာလား?")) return;
-
       localStorage.removeItem('beeChatHistory');
-
       const { data: { user } } = await supabaseClient.auth.getUser();
-      if (user) {
-        await supabaseClient.from('chats').delete().eq('user_id', user.id);
-      }
-
+      if (user) { await supabaseClient.from('chats').delete().eq('user_id', user.id); }
       const chatArea = document.getElementById('chat-area');
       chatArea.innerHTML = '<div class="msg ai"><div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div></div>';
       chatArea.scrollTop = 0; 
     }
-
-    // ============================================================
-    // UTILITY
-    // ============================================================
 
     function escapeHtml(text) {
       const div = document.createElement('div');
@@ -1372,10 +574,7 @@
     });
 
     document.getElementById('prompt').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     });
 
     document.getElementById('prompt').addEventListener('input', function() {
@@ -1385,9 +584,7 @@
 
     window.addEventListener('load', async () => {
       const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        showApp(session.user);
-      }
+      if (session) { showApp(session.user); }
     });
   </script>
 </body>
