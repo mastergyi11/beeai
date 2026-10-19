@@ -2,6 +2,7 @@
 <html lang="my">
 <head>
   <meta charset="UTF-8">
+  <!-- ⭐️ ဖုန်းမျက်နှာပြင် ဆွဲချ/ဆွဲချဲ့ လုပ်လို့မရအောင် ပိတ်ထားသည် -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BeeChat AI</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,17 +12,18 @@
       padding: 0;
       box-sizing: border-box;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
     
-    /* ⭐️ APK မှာ ဆွဲချရင် Refresh မဖြစ်အောင် ကာကွယ်ခြင်း */
+    /* ⭐️ မျက်နှာပြင်တစ်ခုလုံး လှုပ်ရှားမှုကို ပိတ်ထားမည် */
     html, body {
       height: 100%;
       width: 100%;
       overflow: hidden;
       background: #ffffff;
-      overscroll-behavior-y: contain;
-      overscroll-behavior-x: contain;
-      position: fixed; /* မျက်နှာပြင် လှုပ်ရှားမှုကို ပိတ်ခြင်း */
+      position: fixed; /* လုံးဝ မလှုပ်ရှားအောင် ပိတ်ခြင်း */
+      overscroll-behavior: none; 
+      touch-action: none; /* Browser ရဲ့ ဆွဲချ Refresh ကို ပိတ်ခြင်း */
     }
     body {
       display: flex;
@@ -38,6 +40,7 @@
       padding: 20px;
       background: #ffffff;
       overflow-y: auto;
+      touch-action: pan-y; /* ဒီနေရာမှာပဲ ဆွဲချလို့ရမယ် */
     }
     #auth-container .auth-box {
       width: 100%;
@@ -184,6 +187,7 @@
       border-bottom: 1px solid #e5e5e5;
       background: #ffffff;
       flex-shrink: 0;
+      z-index: 20;
     }
     .app-header .logo {
       display: flex;
@@ -193,20 +197,8 @@
       font-size: 17px;
       color: #333;
     }
-    .app-header .logout-btn {
-      background: transparent;
-      border: 1px solid #e0e0e0;
-      color: #666;
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    .app-header .logout-btn:hover {
-      background: #f5f5f5;
-    }
 
-    /* ⭐️ Scroll အတွက် ပြင်ဆင်ထားသည် */
+    /* ⭐️ Chat ဧရိယာ ဆွဲချမှုကို ခွင့်ပြုမည် */
     .chat-area {
       flex: 1 1 auto;
       min-height: 0;
@@ -214,6 +206,8 @@
       -webkit-overflow-scrolling: touch;
       padding: 20px 16px 160px 16px;
       background: #ffffff;
+      touch-action: pan-y; /* ဒီနေရာမှာပဲ ဆွဲချလို့ရမယ် */
+      overscroll-behavior-y: contain; /* အပေါ်ရောက်ရင် ပိုမဆွဲသွားအောင် ထိန်းခြင်း */
     }
     .chat-area::-webkit-scrollbar {
       width: 6px;
@@ -433,7 +427,6 @@
       .attach-btn, .send-btn { width:44px; height:44px; }
       .input-row textarea { min-height:44px; padding:11px 13px; }
     }
-
   </style>
 </head>
 <body>
@@ -547,24 +540,35 @@
 
   <!-- ==================== JAVASCRIPT ==================== -->
   <script>
-    // ⭐️ APK မှာ မျက်နှာပြင် ဆွဲချရင် Refresh မဖြစ်အောင် တားဆီးခြင်း
+    // ============================================================
+    // ⭐️ APK မှာ အပေါ်ကို ဆွဲချရင် Refresh မဖြစ်အောင် လုံးဝ တားဆီးခြင်း
+    // ============================================================
     document.addEventListener('touchmove', function(e) {
+        // လက်နှစ်ချောင်းနဲ့ ဆွဲချဲ့တာကို ပိတ်မယ်
         if (e.touches.length > 1) {
             e.preventDefault();
         }
     }, { passive: false });
 
-    let lastTouchY = 0;
+    let touchStartY = 0;
+    
     document.addEventListener('touchstart', function(e) {
-        lastTouchY = e.touches[0].clientY;
+        // ထိလိုက်တဲ့နေရာကို မှတ်ထားမယ်
+        if (e.touches.length === 1) {
+            touchStartY = e.touches[0].clientY;
+        }
     }, { passive: false });
 
     document.addEventListener('touchmove', function(e) {
-        let touchY = e.touches[0].clientY;
-        let touchYDiff = touchY - lastTouchY;
-        // စာမျက်နှာက ထိပ်ဆုံးမှာရှိပြီး အောက်ကို ဆွဲချရင် Refresh မဖြစ်အောင် တားဆီးမယ်
-        if (document.documentElement.scrollTop === 0 && touchYDiff > 0) {
-            e.preventDefault();
+        if (e.touches.length === 1) {
+            let touchCurrentY = e.touches[0].clientY;
+            let touchDiffY = touchCurrentY - touchStartY;
+            
+            // Chat area က ထိပ်ဆုံးမှာရှိပြီး အောက်ကို ဆွဲချရင် Refresh မဖြစ်အောင် တားမယ်
+            let chatArea = document.getElementById('chat-area');
+            if (chatArea && chatArea.scrollTop <= 0 && touchDiffY > 0) {
+                e.preventDefault();
+            }
         }
     }, { passive: false });
 
@@ -826,7 +830,7 @@
       
       loadLocalChat();
       loadHistory();
-      saveDeviceInfo(); // ⭐️ ဖုန်းအမျိုးအစား သိမ်းမယ်
+      saveDeviceInfo();
     }
 
     // ============================================================
@@ -914,7 +918,6 @@
       sendBtn.disabled = true;
 
       try {
-        // ChatGPT-style routing: image requests are handled directly from the chat input.
         if (!attachment && isImageGenerationRequest(prompt)) {
           const englishPrompt = await buildEnglishImagePrompt(prompt);
           const imageSrc = await requestGeneratedImage(englishPrompt);
@@ -1298,11 +1301,8 @@ async function buildEnglishImagePrompt(userPrompt) {
         await supabaseClient.from('chats').delete().eq('user_id', user.id);
       }
 
-      // မျက်နှာပြင်ကို ပြန်လည်သန့်ရှင်းခြင်း
       const chatArea = document.getElementById('chat-area');
       chatArea.innerHTML = '<div class="msg ai"><div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div></div>';
-      
-      // Scroll ကို အပေါ်ဆုံးသို့ ပြန်တင်ခြင်း
       chatArea.scrollTop = 0; 
     }
 
@@ -1340,4 +1340,4 @@ async function buildEnglishImagePrompt(userPrompt) {
     });
   </script>
 </body>
-  </html>
+</html>
