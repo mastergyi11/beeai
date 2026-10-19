@@ -240,14 +240,10 @@
       line-height: 1.5;
       word-wrap: break-word;
       white-space: pre-wrap;
-      cursor: pointer;
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
       transition: background 0.2s;
-    }
-    .msg .bubble:active {
-      opacity: 0.8;
     }
     .msg.user .bubble {
       background: #10a37f;
@@ -1268,118 +1264,8 @@ async function buildEnglishImagePrompt(userPrompt) {
     }
 
     // ============================================================
-    // ⭐️ စာဖျက်ခြင်း (Long Press) - Scroll နဲ့ မတိုက်မိအောင် ပြင်ထားသည်
+    // ⭐️ Chat အားလုံးဖျက်ခြင်း (Clear All System)
     // ============================================================
-
-    let pressTimer = null;
-    let startX = 0;
-    let startY = 0;
-    let isScrolling = false;
-
-    function setupLongPress() {
-      const chatArea = document.getElementById('chat-area');
-
-      chatArea.addEventListener('touchstart', function(e) {
-        const bubble = e.target.closest('.bubble');
-        if (!bubble) return;
-
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        isScrolling = false;
-
-        pressTimer = setTimeout(() => {
-          if (!isScrolling) {
-            showDeleteConfirm(bubble);
-          }
-        }, 600);
-      }, { passive: true });
-
-      chatArea.addEventListener('touchmove', function(e) {
-        if (!startX || !startY) return;
-        
-        const diffX = Math.abs(e.touches[0].clientX - startX);
-        const diffY = Math.abs(e.touches[0].clientY - startY);
-
-        if (diffX > 10 || diffY > 10) {
-          isScrolling = true;
-          clearTimeout(pressTimer);
-        }
-      }, { passive: true });
-
-      chatArea.addEventListener('touchend', function() {
-        clearTimeout(pressTimer);
-        startX = 0;
-        startY = 0;
-      });
-
-      chatArea.addEventListener('mousedown', function(e) {
-        const bubble = e.target.closest('.bubble');
-        if (!bubble) return;
-        
-        startX = e.clientX;
-        startY = e.clientY;
-        isScrolling = false;
-
-        pressTimer = setTimeout(() => {
-          if (!isScrolling) {
-            showDeleteConfirm(bubble);
-          }
-        }, 600);
-      });
-
-      chatArea.addEventListener('mousemove', function(e) {
-        if (!startX || !startY) return;
-        
-        const diffX = Math.abs(e.clientX - startX);
-        const diffY = Math.abs(e.clientY - startY);
-
-        if (diffX > 10 || diffY > 10) {
-          isScrolling = true;
-          clearTimeout(pressTimer);
-        }
-      });
-
-      chatArea.addEventListener('mouseup', function() {
-        clearTimeout(pressTimer);
-        startX = 0;
-        startY = 0;
-      });
-
-      chatArea.addEventListener('mouseleave', function() {
-        clearTimeout(pressTimer);
-        startX = 0;
-        startY = 0;
-      });
-    }
-
-    async function showDeleteConfirm(bubble) {
-      const confirmDelete = confirm("🗑️ ဒီစာကို ဖျက်မှာ သေချာလား?");
-      
-      if (confirmDelete) {
-        const msgDiv = bubble.closest('.msg');
-        if (msgDiv) {
-          msgDiv.remove();
-        }
-
-        let history = JSON.parse(localStorage.getItem('beeChatHistory') || '[]');
-        const textToDelete = bubble.innerText.trim();
-        history = history.filter(item => {
-          return item.prompt?.trim() !== textToDelete && 
-                 item.response?.trim() !== textToDelete;
-        });
-        localStorage.setItem('beeChatHistory', JSON.stringify(history));
-
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (user) {
-          await supabaseClient.from('chats')
-            .delete()
-            .eq('user_id', user.id)
-            .or(`prompt.eq."${textToDelete}",response.eq."${textToDelete}"`);
-        }
-
-        alert("✅ ဖျက်ပြီးပါပြီ။");
-      }
-    }
 
     async function clearAllChat() {
       if (!confirm("Chat စာတွေအကုန် ဖျက်မှာ သေချာလား?")) return;
@@ -1391,8 +1277,12 @@ async function buildEnglishImagePrompt(userPrompt) {
         await supabaseClient.from('chats').delete().eq('user_id', user.id);
       }
 
-      document.getElementById('chat-area').innerHTML = 
-        '<div class="msg ai"><div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div></div>';
+      // မျက်နှာပြင်ကို ပြန်လည်သန့်ရှင်းခြင်း
+      const chatArea = document.getElementById('chat-area');
+      chatArea.innerHTML = '<div class="msg ai"><div class="bubble">မင်္ဂလာပါ! ကျွန်တော်က BeeChat AI ပါ။ ဘာများ ကူညီပေးရမလဲ?</div></div>';
+      
+      // Scroll ကို အပေါ်ဆုံးသို့ ပြန်တင်ခြင်း
+      chatArea.scrollTop = 0; 
     }
 
     // ============================================================
@@ -1422,7 +1312,7 @@ async function buildEnglishImagePrompt(userPrompt) {
     });
 
     window.addEventListener('load', async () => {
-      setupLongPress();
+      // မလိုအပ်တဲ့ Long press ဖျက်တဲ့စနစ်ကို ဖြုတ်ထားပါတယ်
       
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
