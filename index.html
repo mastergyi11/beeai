@@ -2,7 +2,7 @@
 <html lang="my">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BeeChat AI</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -12,11 +12,16 @@
       box-sizing: border-box;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
     }
+    
+    /* ⭐️ APK မှာ ဆွဲချရင် Refresh မဖြစ်အောင် ကာကွယ်ခြင်း */
     html, body {
       height: 100%;
       width: 100%;
       overflow: hidden;
       background: #ffffff;
+      overscroll-behavior-y: contain;
+      overscroll-behavior-x: contain;
+      position: fixed; /* မျက်နှာပြင် လှုပ်ရှားမှုကို ပိတ်ခြင်း */
     }
     body {
       display: flex;
@@ -32,6 +37,7 @@
       height: 100vh;
       padding: 20px;
       background: #ffffff;
+      overflow-y: auto;
     }
     #auth-container .auth-box {
       width: 100%;
@@ -541,6 +547,27 @@
 
   <!-- ==================== JAVASCRIPT ==================== -->
   <script>
+    // ⭐️ APK မှာ မျက်နှာပြင် ဆွဲချရင် Refresh မဖြစ်အောင် တားဆီးခြင်း
+    document.addEventListener('touchmove', function(e) {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    let lastTouchY = 0;
+    document.addEventListener('touchstart', function(e) {
+        lastTouchY = e.touches[0].clientY;
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function(e) {
+        let touchY = e.touches[0].clientY;
+        let touchYDiff = touchY - lastTouchY;
+        // စာမျက်နှာက ထိပ်ဆုံးမှာရှိပြီး အောက်ကို ဆွဲချရင် Refresh မဖြစ်အောင် တားဆီးမယ်
+        if (document.documentElement.scrollTop === 0 && touchYDiff > 0) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
     // ============================================================
     // ⚠️ Supabase (Login/Register/Database)
     // ============================================================
@@ -888,7 +915,6 @@
 
       try {
         // ChatGPT-style routing: image requests are handled directly from the chat input.
-        // No need to press the separate image-generation button.
         if (!attachment && isImageGenerationRequest(prompt)) {
           const englishPrompt = await buildEnglishImagePrompt(prompt);
           const imageSrc = await requestGeneratedImage(englishPrompt);
@@ -938,8 +964,6 @@
 
     async function callGroqAI(prompt, attachment = null) {
       const payload = { prompt };
-      // The Cloudflare Worker must explicitly support these optional fields
-      // for real image understanding: imageDataUrl, mimeType, and fileName.
       if (attachment) Object.assign(payload, attachment);
       const response = await fetch(GROQ_API_URL, {
         method: 'POST',
@@ -971,7 +995,6 @@ function isImageGenerationRequest(text) {
   const t = String(text || '').trim().toLowerCase();
   if (!t) return false;
 
-  // Burmese image words and image-generation actions
   const imageWords =
     /ပုံ|ဓာတ်ပုံ|နောက်ခံပုံ|လိုဂို|ပိုစတာ|ကာတွန်း|ခွေး|ကြောင်|မျောက်|ငှက်|မြင်း|ဆင်/;
 
@@ -987,7 +1010,6 @@ function isImageGenerationRequest(text) {
   if (imageWords.test(t) && createActions.test(t)) return true;
   if (englishImage.test(t) && englishAction.test(t)) return true;
 
-  // Requests like "dog image", "monkey picture"
   if (/\b(dog|cat|monkey|bird|horse|elephant|rabbit|lion|tiger)\b/i.test(t)
       && /\b(image|picture|photo|draw|create|generate)\b/i.test(t)) {
     return true;
@@ -998,7 +1020,6 @@ function isImageGenerationRequest(text) {
 async function buildEnglishImagePrompt(userPrompt) {
   const text = String(userPrompt || '').trim();
 
-  // တိရစ္ဆာန်အမည်ကို တိုက်ရိုက်သတ်မှတ်ခြင်း
   const animals = [
     { words: ['မျောက်', 'monkey'], name: 'monkey' },
     { words: ['ခွေး', 'dog'], name: 'dog' },
@@ -1312,8 +1333,6 @@ async function buildEnglishImagePrompt(userPrompt) {
     });
 
     window.addEventListener('load', async () => {
-      // မလိုအပ်တဲ့ Long press ဖျက်တဲ့စနစ်ကို ဖြုတ်ထားပါတယ်
-      
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
         showApp(session.user);
