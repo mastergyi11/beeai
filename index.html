@@ -254,50 +254,75 @@
       background: #f4f4f4;
       color: #1a1a1a;
       border-bottom-left-radius: 4px;
+      padding: 8px; /* ပုံအတွက် padding နည်းနည်းချိန်ညှိခြင်း */
     }
-    .msg .bubble img {
-      max-width: 100%;
-      border-radius: 12px;
-      margin-top: 8px;
-    }
-
-    .ai-image-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .ai-image-wrap img {
+    
+    /* ==================== ⭐️ NEW IMAGE UI CSS ==================== */
+    .ai-image-container {
+      position: relative;
       display: block;
-      max-width: 100%;
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      background: #eaeaea;
+    }
+    .ai-image-container img {
+      display: block;
+      width: 100%;
       max-height: 70vh;
       object-fit: contain;
-      margin-top: 0 !important;
-      background: #f7f7f7;
+      margin: 0 !important;
+      border-radius: 12px;
     }
-    .image-download-btn {
-      display: inline-flex;
+    .ai-image-menu-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 36px;
+      height: 36px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      display: flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      min-height: 42px;
-      padding: 8px 14px;
-      border: 0;
-      border-radius: 12px;
-      background: #10a37f;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      text-decoration: none;
+      font-size: 20px;
       cursor: pointer;
-      box-sizing: border-box;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 10;
     }
-    .image-download-btn:active {
-      opacity: 0.85;
+    .ai-image-menu-btn:active {
+      background: rgba(0, 0, 0, 0.7);
     }
+
+    /* Fullscreen Image Viewer */
+    #fullscreen-image-viewer {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #fullscreen-image-viewer.active {
+      display: flex;
+    }
+    #fullscreen-image-viewer img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      touch-action: pinch-zoom; /* Fullscreen မှာ ဆွဲချဲ့လို့ရမယ် */
+    }
+
     .image-error {
       color: #c62828;
       font-size: 14px;
       line-height: 1.5;
+      padding: 10px;
     }
 
     .typing {
@@ -538,14 +563,19 @@
     <div id="modal-root"></div>
   </div>
 
+  <!-- ⭐️ Fullscreen Image Viewer (ပုံကို အပြည့်ကြည့်ရန်) -->
+  <div id="fullscreen-image-viewer" onclick="closeFullscreenImage()">
+    <img id="fullscreen-img" src="" alt="Fullscreen" onclick="event.stopPropagation()">
+  </div>
+
   <!-- ==================== JAVASCRIPT ==================== -->
   <script>
     // ============================================================
     // ⭐️ APK မှာ အပေါ်ကို ဆွဲချရင် Refresh မဖြစ်အောင် လုံးဝ တားဆီးခြင်း
     // ============================================================
     document.addEventListener('touchmove', function(e) {
-        // လက်နှစ်ချောင်းနဲ့ ဆွဲချဲ့တာကို ပိတ်မယ်
-        if (e.touches.length > 1) {
+        // လက်နှစ်ချောင်းနဲ့ ဆွဲချဲ့တာကို ပိတ်မယ် (Fullscreen မှာကြည့်မယ်ဆိုရင် ခြွင်းချက်ထားမယ်)
+        if (e.touches.length > 1 && !e.target.closest('#fullscreen-image-viewer')) {
             e.preventDefault();
         }
     }, { passive: false });
@@ -993,72 +1023,71 @@
     // CHAT ROUTING + IMAGE GENERATION
     // ============================================================
 
-    
-function isImageGenerationRequest(text) {
-  const t = String(text || '').trim().toLowerCase();
-  if (!t) return false;
+    function isImageGenerationRequest(text) {
+      const t = String(text || '').trim().toLowerCase();
+      if (!t) return false;
 
-  const imageWords =
-    /ပုံ|ဓာတ်ပုံ|နောက်ခံပုံ|လိုဂို|ပိုစတာ|ကာတွန်း|ခွေး|ကြောင်|မျောက်|ငှက်|မြင်း|ဆင်/;
+      const imageWords =
+        /ပုံ|ဓာတ်ပုံ|နောက်ခံပုံ|လိုဂို|ပိုစတာ|ကာတွန်း|ခွေး|ကြောင်|မျောက်|ငှက်|မြင်း|ဆင်/;
 
-  const createActions =
-    /ဖန်တီး|ဆွဲ|လုပ်ပေး|ထုတ်ပေး|ဖော်ပြ|ဖော်ပေး|လုပ်ပေးပါ|ဖန်တီးပေး/;
+      const createActions =
+        /ဖန်တီး|ဆွဲ|လုပ်ပေး|ထုတ်ပေး|ဖော်ပြ|ဖော်ပေး|လုပ်ပေးပါ|ဖန်တီးပေး/;
 
-  const englishImage =
-    /\b(image|picture|photo|illustration|wallpaper|logo|poster|avatar|artwork|drawing)\b/i;
+      const englishImage =
+        /\b(image|picture|photo|illustration|wallpaper|logo|poster|avatar|artwork|drawing)\b/i;
 
-  const englishAction =
-    /\b(generate|create|draw|make|design|render|illustrate)\b/i;
+      const englishAction =
+        /\b(generate|create|draw|make|design|render|illustrate)\b/i;
 
-  if (imageWords.test(t) && createActions.test(t)) return true;
-  if (englishImage.test(t) && englishAction.test(t)) return true;
+      if (imageWords.test(t) && createActions.test(t)) return true;
+      if (englishImage.test(t) && englishAction.test(t)) return true;
 
-  if (/\b(dog|cat|monkey|bird|horse|elephant|rabbit|lion|tiger)\b/i.test(t)
-      && /\b(image|picture|photo|draw|create|generate)\b/i.test(t)) {
-    return true;
-  }
+      if (/\b(dog|cat|monkey|bird|horse|elephant|rabbit|lion|tiger)\b/i.test(t)
+          && /\b(image|picture|photo|draw|create|generate)\b/i.test(t)) {
+        return true;
+      }
 
-  return false;
-}
-async function buildEnglishImagePrompt(userPrompt) {
-  const text = String(userPrompt || '').trim();
-
-  const animals = [
-    { words: ['မျောက်', 'monkey'], name: 'monkey' },
-    { words: ['ခွေး', 'dog'], name: 'dog' },
-    { words: ['ကြောင်', 'cat'], name: 'cat' },
-    { words: ['ငှက်', 'bird'], name: 'bird' },
-    { words: ['မြင်း', 'horse'], name: 'horse' },
-    { words: ['ဆင်', 'elephant'], name: 'elephant' },
-    { words: ['ယုန်', 'rabbit'], name: 'rabbit' },
-    { words: ['ခြင်္သေ့', 'lion'], name: 'lion' },
-    { words: ['ကျား', 'tiger'], name: 'tiger' }
-  ];
-
-  const animal = animals.find(item =>
-    item.words.some(word => text.toLowerCase().includes(word.toLowerCase()))
-  );
-
-  if (animal) {
-    return `Create an image of a ${animal.name}. The main subject MUST be a ${animal.name}. Do not show a cat, or any other animal instead. User's original request: ${text}`;
-  }
-
-  const instruction =
-    'Translate this image request into English for an image generator. ' +
-    'Preserve the exact subject, objects, colors, setting, and style. ' +
-    'Return only the English image prompt.\nUser request: ' + text;
-
-  try {
-    const translated = (await callGroqAI(instruction)).trim();
-    if (translated && translated.length > 5) {
-      return translated.slice(0, 1800);
+      return false;
     }
-  } catch (e) {
-    // Translation မအောင်မြင်လျှင် မူရင်းစာကို အသုံးပြုမည်
-  }
+    async function buildEnglishImagePrompt(userPrompt) {
+      const text = String(userPrompt || '').trim();
 
-  return text;
-}
+      const animals = [
+        { words: ['မျောက်', 'monkey'], name: 'monkey' },
+        { words: ['ခွေး', 'dog'], name: 'dog' },
+        { words: ['ကြောင်', 'cat'], name: 'cat' },
+        { words: ['ငှက်', 'bird'], name: 'bird' },
+        { words: ['မြင်း', 'horse'], name: 'horse' },
+        { words: ['ဆင်', 'elephant'], name: 'elephant' },
+        { words: ['ယုန်', 'rabbit'], name: 'rabbit' },
+        { words: ['ခြင်္သေ့', 'lion'], name: 'lion' },
+        { words: ['ကျား', 'tiger'], name: 'tiger' }
+      ];
+
+      const animal = animals.find(item =>
+        item.words.some(word => text.toLowerCase().includes(word.toLowerCase()))
+      );
+
+      if (animal) {
+        return `Create an image of a ${animal.name}. The main subject MUST be a ${animal.name}. Do not show a cat, or any other animal instead. User's original request: ${text}`;
+      }
+
+      const instruction =
+        'Translate this image request into English for an image generator. ' +
+        'Preserve the exact subject, objects, colors, setting, and style. ' +
+        'Return only the English image prompt.\nUser request: ' + text;
+
+      try {
+        const translated = (await callGroqAI(instruction)).trim();
+        if (translated && translated.length > 5) {
+          return translated.slice(0, 1800);
+        }
+      } catch (e) {
+        // Translation မအောင်မြင်လျှင် မူရင်းစာကို အသုံးပြုမည်
+      }
+
+      return text;
+    }
     async function requestGeneratedImage(prompt) {
       const response = await fetch(IMAGE_API_URL + '?prompt=' + encodeURIComponent(prompt), {
         method: 'GET',
@@ -1086,7 +1115,7 @@ async function buildEnglishImagePrompt(userPrompt) {
     }
 
     // ============================================================
-    // AI IMAGE GENERATION
+    // AI IMAGE GENERATION (⭐️ ဒီနေရာမှာ UI အသစ်ပြင်ဆင်ထားပါတယ်)
     // ============================================================
 
     function normalizeImageSource(imageValue) {
@@ -1120,6 +1149,7 @@ async function buildEnglishImagePrompt(userPrompt) {
       return value;
     }
 
+    // ⭐️ ပုံအတွက် HTML ဖန်တီးခြင်း (ဒေါင်းလုဒ်ခလုတ်အစား အစက်သုံးစက်ထည့်ထားသည်)
     function createImageMessage(imageValue) {
       const src = normalizeImageSource(imageValue);
 
@@ -1128,22 +1158,30 @@ async function buildEnglishImagePrompt(userPrompt) {
       }
 
       const safeSrc = escapeHtml(src);
+      // onclick အတွက် string ကို လုံခြုံအောင် ပြောင်းခြင်း
       const jsSrc = JSON.stringify(src).replace(/</g, '\\u003c');
 
-      return '<div class="msg ai"><div class="bubble"><div class="ai-image-wrap">' +
-        '<img src="' + safeSrc + '" alt="AI Image" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';">' +
-        '<div class="image-error" style="display:none;">❌ ပုံကိုဖွင့်မရပါ။ Image API URL/data ကို စစ်ဆေးပါ။</div>' +
-        '<button type="button" class="image-download-btn" onclick="downloadAIImage(this, ' + jsSrc + ')">⬇️ ပုံဒေါင်းလော့</button>' +
-        '</div></div></div>';
+      return '<div class="msg ai"><div class="bubble">' +
+        '<div class="ai-image-container" onclick="openFullscreenImage(' + jsSrc + ')">' +
+          '<img src="' + safeSrc + '" alt="AI Image" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div class=image-error>❌ ပုံကိုဖွင့်မရပါ။</div>\';">' +
+          '<button class="ai-image-menu-btn" onclick="event.stopPropagation(); openImageMenu(' + jsSrc + ')">⋮</button>' +
+        '</div>' +
+      '</div></div>';
     }
 
-    async function downloadAIImage(button, imageSrc) {
-      const originalText = button.textContent;
-      button.disabled = true;
-      button.textContent = '⏳ ဒေါင်းလော့လုပ်နေသည်...';
+    // ⭐️ အစက်သုံးစက်နှိပ်ရင် ပေါ်လာမယ့် Menu (Auto Save ပါဝင်သည်)
+    function openImageMenu(imageSrc) {
+      showModal('ပုံ ရွေးချယ်စရာများ', 
+        '<button class="menu-item" onclick="autoSaveImage(' + JSON.stringify(imageSrc).replace(/</g, '\\u003c') + '); closeModal();">' +
+        '<span class="mi-icon">💾</span><span>ပုံကို သိမ်းဆည်းရန် (Auto Save)</span></button>'
+      );
+    }
 
+    // ⭐️ Auto Save လုပ်ဆောင်ချက်
+    async function autoSaveImage(imageSrc) {
       try {
         if (imageSrc.startsWith('data:')) {
+          // Base64 ပုံဖြစ်ပါက တိုက်ရိုက်သိမ်းမည်
           const a = document.createElement('a');
           a.href = imageSrc;
           a.download = 'beechat-ai-' + Date.now() + '.png';
@@ -1153,6 +1191,7 @@ async function buildEnglishImagePrompt(userPrompt) {
           return;
         }
 
+        // URL ပုံဖြစ်ပါက Blob အဖြစ်ပြောင်းပြီး သိမ်းမည်
         const response = await fetch(imageSrc, { mode: 'cors' });
         if (!response.ok) throw new Error('HTTP ' + response.status);
 
@@ -1167,6 +1206,7 @@ async function buildEnglishImagePrompt(userPrompt) {
 
         setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
       } catch (err) {
+        // CORS ပြဿနာတက်ရင် တိုက်ရိုက်ဖွင့်ပြီး သိမ်းခိုင်းမည်
         try {
           const a = document.createElement('a');
           a.href = imageSrc;
@@ -1177,12 +1217,23 @@ async function buildEnglishImagePrompt(userPrompt) {
           a.click();
           a.remove();
         } catch (fallbackErr) {
-          alert('ပုံဒေါင်းလော့မရပါ: ' + err.message);
+          alert('ပုံသိမ်းဆည်းမရပါ: ' + err.message);
         }
-      } finally {
-        button.disabled = false;
-        button.textContent = originalText;
       }
+    }
+
+    // ⭐️ ပုံကို အပြည့်အဝ (Fullscreen) ကြည့်ရန်
+    function openFullscreenImage(src) {
+      const viewer = document.getElementById('fullscreen-image-viewer');
+      const img = document.getElementById('fullscreen-img');
+      img.src = src;
+      viewer.classList.add('active');
+    }
+    function closeFullscreenImage() {
+      const viewer = document.getElementById('fullscreen-image-viewer');
+      const img = document.getElementById('fullscreen-img');
+      viewer.classList.remove('active');
+      setTimeout(() => { img.src = ''; }, 300); // animation ပြီးမှ src ကို ရှင်းမည်
     }
 
     async function generateImage() {
@@ -1340,4 +1391,4 @@ async function buildEnglishImagePrompt(userPrompt) {
     });
   </script>
 </body>
-</html>
+  </html>
