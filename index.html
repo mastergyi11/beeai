@@ -502,7 +502,7 @@
           <button class="menu-item" onclick="newChat(); closeTopMenu()"><span class="mi-icon">✏️</span><span>စကားဝိုင်းအသစ် (New chat)</span></button>
           <button class="menu-item" onclick="openHistory(); closeTopMenu()"><span class="mi-icon">🕘</span><span>Chat History</span></button>
           <button class="menu-item" onclick="openHistory(); closeTopMenu()"><span class="mi-icon">🔎</span><span>စကားဝိုင်းဟောင်း ရှာရန်</span></button>
-          <button class="menu-item" onclick="generateImageFromMenu(); closeTopMenu()"><span class="mi-icon">🎨</span><span>ပုံဖန်တီးရန်</span></button>
+          <button class="menu-item" onclick="generateImageFromMenu(); closeTopMenu()"><span class="mi-icon">🎨</span><span></span></button>
           <button class="menu-item" onclick="openSettings(); closeTopMenu()"><span class="mi-icon">⚙️</span><span>Settings</span></button>
           <div class="menu-separator"></div>
           <button class="menu-item" onclick="clearAllChat(); closeTopMenu()"><span class="mi-icon">🗑️</span><span>Chat အားလုံးဖျက်ရန်</span></button>
@@ -535,9 +535,6 @@
         </div>
         <textarea id="prompt" rows="1" placeholder="မက်ဆေ့ချ် ရိုက်ထည့်ပါ..."></textarea>
         <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
-      </div>
-      <div class="input-row" style="margin-top:8px;">
-        <button class="btn-secondary" onclick="generateImage()" style="width:100%;padding:10px;border-radius:24px;border:none;cursor:pointer;font-size:14px;">🎨 ပုံဖော်မယ်</button>
       </div>
       <input id="camera-input" type="file" accept="image/*" capture="environment" hidden>
       <input id="gallery-input" type="file" accept="image/*" hidden>
@@ -973,32 +970,75 @@
     // CHAT ROUTING + IMAGE GENERATION
     // ============================================================
 
-    function isImageGenerationRequest(text) {
-      const t = String(text || '').trim().toLowerCase();
-      if (!t) return false;
-      const burmeseImage = /ပုံ|ဓာတ်ပုံ|နောက်ခံပုံ|လိုဂို|ပိုစတာ|အနုပညာပုံ|ကာတွန်းပုံ/.test(t);
-      const burmeseAction = /ဖော်|ဖန်တီး|ဆွဲ|လုပ်ပေး|ထုတ်ပေး|ပြုလုပ်|ဖန်တီးပေး|ဆွဲပေး|လုပ်ပေးပါ|ဖော်ပေး/.test(t);
-      const englishImage = /\b(image|picture|photo|illustration|wallpaper|logo|poster|avatar|artwork|drawing)\b/i.test(t);
-      const englishAction = /\b(generate|create|draw|make|design|render|illustrate)\b/i.test(t);
-      if (burmeseImage && burmeseAction) return true;
-      if (englishImage && englishAction) return true;
-      if (/\b(generate|create|draw|make|design)\b/i.test(t) && /\b(anime|wallpaper|logo|poster|portrait|landscape)\b/i.test(t)) return true;
-      return false;
-    }
+    
+function isImageGenerationRequest(text) {
+  const t = String(text || '').trim().toLowerCase();
+  if (!t) return false;
 
-    async function buildEnglishImagePrompt(userPrompt) {
-      // Image models often follow English prompts more reliably. Translate the user's
-      // Burmese request while preserving all visual details and text requirements.
-      const instruction = 'Translate the following image-generation request into a detailed, natural English prompt for an image-generation model. Preserve the exact meaning, people, objects, setting, composition, colors, style, and any requested visible text. Do not add new details. Return only the English prompt, no explanation. User request: ' + userPrompt;
-      try {
-        const translated = (await callGroqAI(instruction)).trim();
-        if (translated && translated.length > 5) return translated.slice(0, 1800);
-      } catch (e) {
-        // If translation is temporarily unavailable, still attempt generation with original text.
-      }
-      return userPrompt;
-    }
+  // Burmese image words and image-generation actions
+  const imageWords =
+    /ပုံ|ဓာတ်ပုံ|နောက်ခံပုံ|လိုဂို|ပိုစတာ|ကာတွန်း|ခွေး|ကြောင်|မျောက်|ငှက်|မြင်း|ဆင်/;
 
+  const createActions =
+    /ဖန်တီး|ဆွဲ|လုပ်ပေး|ထုတ်ပေး|ဖော်ပြ|ဖော်ပေး|လုပ်ပေးပါ|ဖန်တီးပေး/;
+
+  const englishImage =
+    /\b(image|picture|photo|illustration|wallpaper|logo|poster|avatar|artwork|drawing)\b/i;
+
+  const englishAction =
+    /\b(generate|create|draw|make|design|render|illustrate)\b/i;
+
+  if (imageWords.test(t) && createActions.test(t)) return true;
+  if (englishImage.test(t) && englishAction.test(t)) return true;
+
+  // Requests like "dog image", "monkey picture"
+  if (/\b(dog|cat|monkey|bird|horse|elephant|rabbit|lion|tiger)\b/i.test(t)
+      && /\b(image|picture|photo|draw|create|generate)\b/i.test(t)) {
+    return true;
+  }
+
+  return false;
+}
+async function buildEnglishImagePrompt(userPrompt) {
+  const text = String(userPrompt || '').trim();
+
+  // တိရစ္ဆာန်အမည်ကို တိုက်ရိုက်သတ်မှတ်ခြင်း
+  const animals = [
+    { words: ['မျောက်', 'monkey'], name: 'monkey' },
+    { words: ['ခွေး', 'dog'], name: 'dog' },
+    { words: ['ကြောင်', 'cat'], name: 'cat' },
+    { words: ['ငှက်', 'bird'], name: 'bird' },
+    { words: ['မြင်း', 'horse'], name: 'horse' },
+    { words: ['ဆင်', 'elephant'], name: 'elephant' },
+    { words: ['ယုန်', 'rabbit'], name: 'rabbit' },
+    { words: ['ခြင်္သေ့', 'lion'], name: 'lion' },
+    { words: ['ကျား', 'tiger'], name: 'tiger' }
+  ];
+
+  const animal = animals.find(item =>
+    item.words.some(word => text.toLowerCase().includes(word.toLowerCase()))
+  );
+
+  if (animal) {
+    return `Create an image of a ${animal.name}. The main subject MUST be a ${animal.name}. Do not show a cat, or any other animal instead. User's original request: ${text}`;
+  }
+
+  const instruction =
+    'Translate this image request into English for an image generator. ' +
+    'Preserve the exact subject, objects, colors, setting, and style. ' +
+    'Return only the English image prompt.\nUser request: ' + text;
+
+  try {
+    const translated = (await callGroqAI(instruction)).trim();
+    if (translated && translated.length > 5) {
+      return translated.slice(0, 1800);
+    }
+  } catch (e) {
+    // Translation မအောင်မြင်လျှင် မူရင်းစာကို အသုံးပြုမည်
+  }
+
+  return text;
+}
     async function requestGeneratedImage(prompt) {
       const response = await fetch(IMAGE_API_URL + '?prompt=' + encodeURIComponent(prompt), {
         method: 'GET',
@@ -1391,4 +1431,4 @@
     });
   </script>
 </body>
-          </html>
+  </html>
